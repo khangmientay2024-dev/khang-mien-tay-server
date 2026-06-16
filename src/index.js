@@ -8,8 +8,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // 1. Tuyến đường xác thực Domain cho Zalo Developers (Theo Screenshot (52).png)
-app.get('/FVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html', (req, res) => {
-    res.sendFile(__dirname + '/FVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html');
+app.get('/zalo_verifierFVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html', (req, res) => {
+    res.sendFile(__dirname + '/zalo_verifierFVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html');
 });
 
 // 2. Tuyến đường kiểm tra trạng thái hoạt động (Xem trực tiếp trên trình duyệt)
