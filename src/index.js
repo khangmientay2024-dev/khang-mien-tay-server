@@ -7,12 +7,17 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// 1. Tuyến đường kiểm tra xem server có hoạt động hay không (Xem trên trình duyệt)
+// 1. Tuyến đường xác thực Domain cho Zalo Developers (Theo Screenshot (52).png)
+app.get('/FVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html', (req, res) => {
+    res.sendFile(__dirname + '/FVE5AxZG7Gv7nQaPZiaED5M-WX-vo5T8DJSs.html');
+});
+
+// 2. Tuyến đường kiểm tra trạng thái hoạt động (Xem trực tiếp trên trình duyệt)
 app.get('/', (req, res) => {
     res.send('Server Khang Miền Tây đang hoạt động trực tuyến ngon lành!');
 });
 
-// 2. Tuyến đường tiếp nhận Webhook từ Zalo (Nơi Zalo gửi tin nhắn về)
+// 3. Tuyến đường tiếp nhận Webhook từ Zalo (Nơi nhận tin nhắn từ khách hàng gửi về)
 app.post('/zalo-webhook', (req, res) => {
     try {
         const data = req.body;
@@ -32,7 +37,7 @@ app.post('/zalo-webhook', (req, res) => {
     }
 });
 
-// Cấu hình Cổng (Port): Render sẽ tự cấp cổng qua process.env.PORT, dưới máy ông sẽ chạy cổng 5000
+// Cấu hình Cổng (Port): Render tự cấp qua biến môi trường, dưới máy local chạy cổng 5000
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
