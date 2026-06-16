@@ -9,7 +9,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// TÀI KHOẢN SHIPPER CỐ ĐỊNH
 const SHIPPER_ACCOUNTS = [
     { username: 'ship01', password: '123', name: 'Khang Miền Tây' },
     { username: 'ship02', password: '123', name: 'Anh An' },
@@ -17,16 +16,14 @@ const SHIPPER_ACCOUNTS = [
 ];
 
 let orders = [];
-let shipperLocations = {}; // { 'Tên': { lat, lng, updatedAt, timestamp } }
+let shipperLocations = {}; 
 let chatMessages = []; 
 let orderIdCounter = 1;
 
-// LẤY GIỜ VIỆT NAM CHUẨN
 function getVNTime() {
     return new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
 }
 
-// THUẬT TOÁN ĐẾM SỐ SHIPPER ĐANG HOẠT ĐỘNG (Trong vòng 2 phút trở lại)
 function getActiveShippers() {
     const now = Date.now();
     const activeList = [];
@@ -38,7 +35,6 @@ function getActiveShippers() {
     return activeList;
 }
 
-// 1. ĐĂNG NHẬP
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const user = SHIPPER_ACCOUNTS.find(u => u.username === username && u.password === password);
@@ -46,10 +42,9 @@ app.post('/api/login', (req, res) => {
     else res.status(401).json({ success: false, error: 'Sai tài khoản hoặc mật khẩu!' });
 });
 
-// LẤY DANH SÁCH ĐƠN HÀNG
 app.get('/api/orders', (req, res) => res.json(orders));
 
-// 2. TẠO ĐƠN MỚI (Bếp hay Shipper gọi vào đây đều được)
+// TẠO ĐƠN MỚI
 app.post('/api/orders', (req, res) => {
     const { content, note, deliveryTime, phone } = req.body;
     if (!content) return res.status(400).json({ error: 'Nội dung trống!' });
@@ -61,12 +56,11 @@ app.post('/api/orders', (req, res) => {
         if (match) extractedPhone = match[0];
     }
 
-    // RÀNG BUỘC SỐ ĐIỆN THOẠI 10 SỐ VÀ BẮT ĐẦU BẰNG 0
     if (!extractedPhone || !/^0\d{9}$/.test(extractedPhone)) {
         return res.status(400).json({ 
             success: false, 
             isInvalidPhone: true, 
-            error: '🚨 LỖI TẠO ĐƠN: Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số (VD: 0912345678).' 
+            error: '🚨 LỖI: Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số.' 
         });
     }
 
@@ -84,6 +78,9 @@ app.post('/api/orders', (req, res) => {
         });
     }
 
+    // TÍNH NĂNG MỚI: QUÉT XEM KHÁCH CÓ ĐƠN NÀO ĐANG TREO KHÔNG (ĐỂ GỘP ĐƠN)
+    const isSameCustomer = orders.some(o => o.phone === extractedPhone && o.status !== 'DONE');
+
     const newOrder = {
         id: orderIdCounter++,
         content,
@@ -95,10 +92,11 @@ app.post('/api/orders', (req, res) => {
         createdAt: getVNTime()
     };
     orders.push(newOrder);
-    res.status(201).json({ success: true, order: newOrder });
+    
+    // Trả về thêm biến isSameCustomer để báo cho frontend
+    res.status(201).json({ success: true, order: newOrder, isSameCustomer });
 });
 
-// 3. BẾP BẤM PHA XONG -> TỰ ĐỘNG PHÂN PHỐI NẾU CHỈ CÓ 1 SHIPPER
 app.put('/api/orders/:id/ready', (req, res) => {
     const orderId = parseInt(req.params.id);
     const order = orders.find(o => o.id === orderId);
@@ -115,7 +113,6 @@ app.put('/api/orders/:id/ready', (req, res) => {
     res.json({ success: true, autoAssigned: activeShippers.length === 1 });
 });
 
-// 4. SHIPPER CHỦ ĐỘNG NHẬN ĐƠN
 app.put('/api/orders/:id/assign', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { shipperName } = req.body;
@@ -129,7 +126,6 @@ app.put('/api/orders/:id/assign', (req, res) => {
     res.json({ success: true, order });
 });
 
-// 5. CẬP NHẬT GIAO XONG
 app.put('/api/orders/:id/status', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
@@ -145,7 +141,6 @@ app.delete('/api/orders/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// CẬP NHẬT TỌA ĐỘ VÀ THỜI GIAN THỰC
 app.post('/api/shipper/location', (req, res) => {
     const { shipperName, lat, lng } = req.body;
     if (shipperName) {
@@ -161,7 +156,6 @@ app.post('/api/shipper/location', (req, res) => {
 
 app.get('/api/shipper/locations', (req, res) => res.json(shipperLocations));
 
-// TRÒ CHUYỆN REALTIME
 app.get('/api/chat', (req, res) => res.json(chatMessages));
 app.post('/api/chat', (req, res) => {
     const { sender, text } = req.body;

@@ -30,12 +30,12 @@
         @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
 
         .order-list-container { display: flex; flex-direction: column; gap: 8px; }
-        .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
         .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
         .badge-shipper { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
         
-        .btn-ready { background: #ea580c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;}
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: 5px; }
+        .btn-ready { background: #ea580c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; white-space: nowrap;}
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; white-space: nowrap;}
 
         .chat-box { background: white; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 400px; }
         .chat-header { background: #1e293b; color: white; padding: 10px; border-radius: 12px 12px 0 0; font-weight: 600; font-size: 14px; text-align: center; }
@@ -66,11 +66,8 @@
                     <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 XUẤT EXCEL BÁO CÁO</button>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
-                    <h3 style="margin: 0;">🔥 1. BẾP ĐANG PHA CHẾ</h3>
-                    <button class="btn-ready" onclick="guiCacDonDaTick()">🚀 GỬI CÁC ĐƠN ĐÃ TICK</button>
-                </div>
-                <div id="list-pending" class="order-list-container" style="margin-top: 10px;"></div>
+                <h3 style="margin-top: 20px;">🔥 1. BẾP ĐANG PHA CHẾ</h3>
+                <div id="list-pending" class="order-list-container"></div>
 
                 <h3>📦 2. ĐƠN CHỜ SHIPPER ĐẾN NHẬN (Nhiều hơn 2 ship online)</h3>
                 <div id="list-ready" class="order-list-container"></div>
@@ -115,35 +112,23 @@
                     alert(data.error); 
                     return; 
                 }
+
+                // CẢNH BÁO NẾU CÙNG 1 KHÁCH ĐẶT NHIỀU ĐƠN
+                if (data.isSameCustomer) {
+                    alert("⚠️ CHÚ Ý: Khách này (cùng SĐT) đang có đơn khác chưa giao xong. Bếp nhớ lưu ý GỘP ĐƠN cho shipper nhé!");
+                }
                 
                 document.getElementById('orderContent').value = '';
                 layDuLieu();
             } catch(e) {}
         }
 
-        async function guiCacDonDaTick() {
-            const checkboxes = document.querySelectorAll('.tick-don-pha:checked');
-            if (checkboxes.length === 0) {
-                alert("⚠️ Quán chưa tick chọn đơn nào đã pha xong cả!");
-                return;
-            }
-            
-            let autoAssignedCount = 0;
-            for (let cb of checkboxes) {
-                try {
-                    const res = await fetch(`/api/orders/${cb.value}/ready`, { method: 'PUT' });
-                    const data = await res.json();
-                    if(data.autoAssigned) autoAssignedCount++;
-                } catch(e) { console.error(e); }
-            }
-            
-            if(autoAssignedCount > 0) {
-                alert(`🚀 Đã đẩy ${checkboxes.length} đơn. (Hệ thống tự động gán ${autoAssignedCount} đơn cho 1 shipper đang online!)`);
-            } else {
-                alert(`🚀 Đã đẩy ${checkboxes.length} đơn qua màn hình cho Shipper hốt!`);
-            }
-            
-            layDuLieu(); 
+        // ĐỔI TỪ TICK SANG BẤM NÚT ĐỂ TRÁNH MẤT STATE KHI REFRESH
+        async function chuyenDonPhaXong(id) {
+            try {
+                await fetch(`/api/orders/${id}/ready`, { method: 'PUT' });
+                layDuLieu(); 
+            } catch(e) { console.error(e); }
         }
 
         async function xoaDon(id) {
@@ -173,21 +158,18 @@
 
                     const cardHTML = `
                         <div class="order-card">
-                            <div>
+                            <div style="flex: 1;">
                                 <strong>#${o.id}</strong> [${o.createdAt}] - ${text}
                                 ${o.shipperName ? `<br><span class="badge-shipper">👤 Người giao: ${o.shipperName}</span>` : ''}
                             </div>
-                            <div>
+                            <div style="display: flex; flex-direction: column; gap: 5px;">
                                 ${o.status === 'PENDING' ? `
-                                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin-bottom:5px; justify-content: flex-end;">
-                                        <input type="checkbox" class="tick-don-pha" value="${o.id}" style="width:18px;height:18px;accent-color:#ea580c;">
-                                        <b style="color:#d97706; font-size: 13px;">Đã pha xong</b>
-                                    </label>
-                                    <button class="btn-delete" onclick="xoaDon(${o.id})" style="float:right;">Hủy</button>
+                                    <button class="btn-ready" onclick="chuyenDonPhaXong(${o.id})">✅ PHA XONG</button>
+                                    <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy đơn</button>
                                 ` : ''}
-                                ${o.status === 'READY' ? `<b style="color:#d97706; font-size:13px;">⏳ Chờ Ship hốt...</b> <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>` : ''}
-                                ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px;">⚡ ĐANG GIAO...</b>` : ''}
-                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px;">✅ GIAO XONG ✓</b>` : ''}
+                                ${o.status === 'READY' ? `<b style="color:#d97706; font-size:13px; white-space:nowrap;">⏳ Chờ hốt...</b> <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>` : ''}
+                                ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px; white-space:nowrap;">⚡ ĐANG GIAO</b>` : ''}
+                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px; white-space:nowrap;">✅ ĐÃ XONG</b>` : ''}
                             </div>
                         </div>`;
 
