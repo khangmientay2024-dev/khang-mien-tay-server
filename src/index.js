@@ -14,21 +14,34 @@ let batches = [];
 let orderIdCounter = 1;
 let batchIdCounter = 1;
 
-// Lấy danh sách đơn hàng
+// 1. API LẤY DANH SÁCH ĐƠN HÀNG LẺ
 app.get('/api/orders', (req, res) => {
     res.json(orders);
 });
 
-// Tạo đơn hàng mới (Hỗ trợ thêm trường phone)
+// 2. API LẤY DANH SÁCH CÁC ĐỢT CHẠY (CÁI NÀY NÈ! NÃY BỊ THIẾU LÀM SHIPPER LỖI 404)
+app.get('/api/batches', (req, res) => {
+    res.json(batches);
+});
+
+// 3. TẠO ĐƠN HÀNG MỚI (Hỗ trợ parse chuỗi thô tự do)
 app.post('/api/orders', (req, res) => {
     const { content, note, deliveryTime, phone } = req.body;
     if (!content) return res.status(400).json({ error: 'Nội dung không được trống' });
+
+    // Thuật toán tự tách Số điện thoại nếu có trong chuỗi thô để shipper bấm gọi cho tiện
+    let extractedPhone = phone || '';
+    if (!extractedPhone) {
+        const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
+        const match = content.match(phoneRegex);
+        if (match) extractedPhone = match[0];
+    }
 
     const newOrder = {
         id: orderIdCounter++,
         content,
         note: note || '',
-        phone: phone || '', // Lưu số điện thoại khách
+        phone: extractedPhone, 
         deliveryTime: deliveryTime || 'Giao ngay',
         status: 'PENDING',
         batchId: null,
@@ -38,7 +51,7 @@ app.post('/api/orders', (req, res) => {
     res.status(201).json({ success: true, order: newOrder });
 });
 
-// Sửa thông tin đơn hàng
+// 4. SỬA THÔNG TIN ĐƠN HÀNG
 app.put('/api/orders/:id', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { content, note, deliveryTime, phone } = req.body;
@@ -47,7 +60,7 @@ app.put('/api/orders/:id', (req, res) => {
     if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
 
     if (order.status !== 'PENDING') {
-        return res.status(400).json({ error: 'Đơn đã xếp đợt giao, không thể sửa!' });
+        return res.status(400).json({ error: 'Đơn đã xếp chuyến, không thể sửa!' });
     }
 
     order.content = content || order.content;
@@ -58,7 +71,7 @@ app.put('/api/orders/:id', (req, res) => {
     res.json({ success: true, order });
 });
 
-// Xóa đơn hàng
+// 5. XÓA/HỦY ĐƠN HÀNG
 app.delete('/api/orders/:id', (req, res) => {
     const orderId = parseInt(req.params.id);
     const orderIndex = orders.findIndex(o => o.id === orderId);
@@ -72,7 +85,7 @@ app.delete('/api/orders/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// Cập nhật trạng thái đơn hàng lẻ (Dành cho Shipper tick giao xong từng đơn) - API BỔ SUNG
+// 6. SHIPPER CẬP NHẬT TRẠNG THÁI ĐƠN LẺ (Bấm Giao Xong từng đơn lẻ trong chuyến)
 app.put('/api/orders/:id/status', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
@@ -82,7 +95,7 @@ app.put('/api/orders/:id/status', (req, res) => {
 
     order.status = status;
     
-    // Kiểm tra nếu tất cả đơn trong đợt đã DONE thì tự động DONE luôn đợt đó
+    // Tự động kiểm tra: Nếu tất cả đơn con thuộc đợt này đã "DONE", thì tự động hóa "DONE" nguyên đợt chạy luôn
     if (order.batchId && status === 'DONE') {
         const batch = batches.find(b => b.id === order.batchId);
         if (batch) {
@@ -97,7 +110,7 @@ app.put('/api/orders/:id/status', (req, res) => {
     res.json({ success: true, order });
 });
 
-// Gom đợt giao hàng
+// 7. QUẦY BẾP GOM ĐỢT GIAO HÀNG
 app.post('/api/batches', (req, res) => {
     const { orderIds, shipperName } = req.body;
     if (!orderIds || orderIds.length === 0) return res.status(400).json({ error: 'Chưa chọn đơn!' });
@@ -122,7 +135,7 @@ app.post('/api/batches', (req, res) => {
     res.status(201).json({ success: true, batch: newBatch });
 });
 
-// Cập nhật trạng thái đợt giao
+// 8. CẬP NHẬT TRẠNG THÁI TOÀN BỘ ĐỢT GIAO
 app.put('/api/batches/:id/status', (req, res) => {
     const batchId = parseInt(req.params.id);
     const { status } = req.body;
@@ -141,7 +154,7 @@ app.put('/api/batches/:id/status', (req, res) => {
     res.json({ success: true });
 });
 
-// Xuất file Excel báo cáo
+// 9. XUẤT FILE EXCEL BÁO CÁO DOANH THU
 app.post('/api/export-excel', async (req, res) => {
     try {
         if (orders.length === 0) return res.status(400).json({ error: 'Không có dữ liệu' });
@@ -168,4 +181,4 @@ app.post('/api/export-excel', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server chạy tại cổng: ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Hệ thống Khang Miền Tây chạy mượt tại cổng: ${PORT}`));
