@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>KHANG MIỀN TÂY - Shipper</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f4f6f9; }
+        h2 { color: #333; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
+        .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        textarea, input { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .order-card { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: chop_nhay 0.8s infinite alternate; }
+        @keyframes chop_nhay { from { box-shadow: 0 0 4px #dc3545; } to { box-shadow: 0 0 16px #dc3545; } }
+        .btn-nhan { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-lammoi { padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>🛵 KHANG MIỀN TÂY - Đội Ngũ Shipper</h2>
+
+    <div class="box-nhap">
+        <h3>✍️ Shipper tự thêm đơn nhanh</h3>
+        <textarea id="content" placeholder="Copy nội dung đơn dán vào đây..." rows="3"></textarea>
+        <input type="text" id="note" placeholder="Địa chỉ giao hàng">
+        <button class="btn-gui" onclick="taoDonHang()">Thêm đơn vào hàng đợi ship</button>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>🚨 Đơn Hàng Đang Gọi Ship (Pha chế đã làm xong)</h3>
+        <button class="btn-lammoi" onclick="layDonGiao()">🔄 Kiểm tra đơn mới</button>
+    </div>
+    <div id="list-ship" style="margin-top: 15px;"></div>
+
+    <script>
+        async function taoDonHang() {
+            const content = document.getElementById('content').value;
+            const note = document.getElementById('note').value;
+            if(!content) return alert('Dán nội dung đơn vào đã ông ơi!');
+
+            // Shipper tự tạo đơn thì mặc định cho trạng thái là READY để đi giao luôn
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, note })
+            });
+            const data = await res.json();
+            if(data.success) {
+                // Tự động chuyển đơn vừa tạo sang READY luôn cho shipper thấy
+                await fetch(`/api/orders/${data.order.id}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'READY' })
+                });
+                document.getElementById('content').value = '';
+                document.getElementById('note').value = '';
+                layDonGiao();
+            }
+        }
+
+        async function layDonGiao() {
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            const listDiv = document.getElementById('list-ship');
+            listDiv.innerHTML = '';
+
+            const readys = orders.filter(o => o.status === 'READY');
+            if(readys.length === 0) {
+                listDiv.innerHTML = '<p style="color: #666;">Chưa có đơn nào pha xong cần gọi ship.</p>';
+                return;
+            }
+
+            readys.forEach(o => {
+                listDiv.innerHTML += `
+                    <div class="order-card">
+                        <h3>🚨 CÓ ĐƠN MỚI XONG #${o.id}</h3>
+                        <p><strong>Món:</strong> ${o.content}</p>
+                        <p><strong>Giao đến:</strong> ${o.note || 'Chưa ghi địa chỉ'}</p>
+                        <button class="btn-nhan" onclick="nhanGiaoHang(${o.id})">🛵 BẤM ĐỂ NHẬN ĐƠN</button>
+                    </div>
+                `;
+                
+                // Phát tiếng Beep chuông kêu bíp bíp nhắc nhở shipper
+                try {
+                    const context = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = context.createOscillator();
+                    osc.connect(context.destination);
+                    osc.start(); 
+                    osc.stop(context.currentTime + 0.15);
+                } catch(e) { console.log(e); }
+            });
+        }
+
+        async function nhanGiaoHang(id) {
+            const res = await fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'DELIVERING' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(`Đã nhận đơn #${id}. Chúc ông vạn dặm bình an!`);
+                layDonGiao();
+            }
+        }
+
+        layDonGiao();
+    </script>
+</body>
+</html>

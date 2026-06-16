@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>KHANG MIỀN TÂY - Pha Chế</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f4f6f9; }
+        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        textarea, input { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        .order-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-goi { padding: 10px 20px; background: #dc3545; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .btn-lammoi { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h2>☕ KHANG MIỀN TÂY - Bộ Phận Pha Chế</h2>
+
+    <div class="box-nhap">
+        <h3>✍️ Dán đơn hàng mới tại đây</h3>
+        <textarea id="content" placeholder="Copy nội dung đơn dán vào đây... (Ví dụ: 2 Trà sữa, 1 Hồng trà)" rows="3"></textarea>
+        <input type="text" id="note" placeholder="Địa chỉ hoặc Ghi chú shipper">
+        <button class="btn-gui" onclick="taoDonHang()">Thêm vào danh sách pha chế</button>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>⏳ Danh Sách Đang Pha Chế</h3>
+        <button class="btn-lammoi" onclick="layDonHang()">🔄 Cập nhật đơn</button>
+    </div>
+    <div id="list-orders" style="margin-top: 15px;"></div>
+
+    <script>
+        async function taoDonHang() {
+            const content = document.getElementById('content').value;
+            const note = document.getElementById('note').value;
+            if(!content) return alert('Dán nội dung đơn vào đã ông ơi!');
+
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, note })
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('content').value = '';
+                document.getElementById('note').value = '';
+                layDonHang();
+            }
+        }
+
+        async function layDonHang() {
+            const res = await fetch('/api/orders');
+            const orders = await res.json();
+            const listDiv = document.getElementById('list-orders');
+            listDiv.innerHTML = '';
+
+            // Lọc các đơn PENDING (Chờ pha chế)
+            const pendings = orders.filter(o => o.status === 'PENDING');
+            if(pendings.length === 0) listDiv.innerHTML = '<p style="color: #666;">Hiện tại chưa có đơn nào cần làm.</p>';
+            
+            pendings.forEach(o => {
+                listDiv.innerHTML += `
+                    <div class="order-card">
+                        <h4>ĐƠN HÀNG #${o.id}</h4>
+                        <p><strong>Chi tiết:</strong> ${o.content}</p>
+                        <p><strong>Ghi chú:</strong> ${o.note || 'Không có'}</p>
+                        <button class="btn-goi" onclick="goiShip(${o.id})">🔔 Xong rồi - GỌI SHIPPER LÊN ĐƠN!</button>
+                    </div>
+                `;
+            });
+        }
+        
+        async function goiShip(id) {
+            const res = await fetch(`/api/orders/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'READY' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(`Đã phát tín hiệu gọi Ship cho đơn #${id}!`);
+                layDonHang();
+            }
+        }
+
+        layDonHang();
+    </script>
+</body>
+</html>
