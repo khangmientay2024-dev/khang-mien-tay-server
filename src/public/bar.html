@@ -10,7 +10,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-global); color: var(--text-main); padding: 20px 10px; }
         
-        /* BANNER CẢNH BÁO MẤT MẠNG WI-FI/4G */
         .network-alert { display: none; background: #ef4444; color: white; text-align: center; padding: 12px; font-weight: 700; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         .container { max-width: 1000px; margin: 20px auto 0 auto; display: flex; flex-direction: column; gap: 15px; }
@@ -35,7 +34,7 @@
         .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
         .badge-shipper { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
         
-        .btn-ready { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;}
+        .btn-ready { background: #ea580c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;}
         .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: 5px; }
 
         .chat-box { background: white; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 400px; }
@@ -67,8 +66,11 @@
                     <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 XUẤT EXCEL BÁO CÁO</button>
                 </div>
 
-                <h3>🔥 1. BẾP ĐANG PHA CHẾ (Xong bấm nút kế bên)</h3>
-                <div id="list-pending" class="order-list-container"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                    <h3 style="margin: 0;">🔥 1. BẾP ĐANG PHA CHẾ</h3>
+                    <button class="btn-ready" onclick="guiCacDonDaTick()">🚀 GỬI CÁC ĐƠN ĐÃ TICK</button>
+                </div>
+                <div id="list-pending" class="order-list-container" style="margin-top: 10px;"></div>
 
                 <h3>📦 2. ĐƠN CHỜ SHIPPER ĐẾN NHẬN (Nhiều hơn 2 ship online)</h3>
                 <div id="list-ready" class="order-list-container"></div>
@@ -94,7 +96,6 @@
     </div>
 
     <script>
-        // KIỂM TRA TRẠNG THÁI MẠNG TỰ ĐỘNG
         window.addEventListener('online', () => document.getElementById('offlineBanner').style.display = 'none');
         window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display = 'block');
 
@@ -109,21 +110,40 @@
                     body: JSON.stringify({ content })
                 });
                 const data = await res.json();
-                if(!res.ok && data.isDuplicate) { alert(data.error); return; }
+                
+                if(!res.ok) { 
+                    alert(data.error); 
+                    return; 
+                }
+                
                 document.getElementById('orderContent').value = '';
                 layDuLieu();
             } catch(e) {}
         }
 
-        async function statusPhaXong(id) {
-            try {
-                const res = await fetch(`/api/orders/${id}/ready`, { method: 'PUT' });
-                const data = await res.json();
-                if (data.autoAssigned) {
-                    alert("💡 Vì ca làm hiện tại chỉ có 1 shipper online, hệ thống đã tự gán thẳng đơn này cho họ luôn!");
-                }
-                layDuLieu();
-            } catch(e) {}
+        async function guiCacDonDaTick() {
+            const checkboxes = document.querySelectorAll('.tick-don-pha:checked');
+            if (checkboxes.length === 0) {
+                alert("⚠️ Quán chưa tick chọn đơn nào đã pha xong cả!");
+                return;
+            }
+            
+            let autoAssignedCount = 0;
+            for (let cb of checkboxes) {
+                try {
+                    const res = await fetch(`/api/orders/${cb.value}/ready`, { method: 'PUT' });
+                    const data = await res.json();
+                    if(data.autoAssigned) autoAssignedCount++;
+                } catch(e) { console.error(e); }
+            }
+            
+            if(autoAssignedCount > 0) {
+                alert(`🚀 Đã đẩy ${checkboxes.length} đơn. (Hệ thống tự động gán ${autoAssignedCount} đơn cho 1 shipper đang online!)`);
+            } else {
+                alert(`🚀 Đã đẩy ${checkboxes.length} đơn qua màn hình cho Shipper hốt!`);
+            }
+            
+            layDuLieu(); 
         }
 
         async function xoaDon(id) {
@@ -159,8 +179,11 @@
                             </div>
                             <div>
                                 ${o.status === 'PENDING' ? `
-                                    <button class="btn-ready" onclick="statusPhaXong(${o.id})">✅ Pha Xong</button>
-                                    <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>
+                                    <label style="cursor:pointer; display:flex; align-items:center; gap:5px; margin-bottom:5px; justify-content: flex-end;">
+                                        <input type="checkbox" class="tick-don-pha" value="${o.id}" style="width:18px;height:18px;accent-color:#ea580c;">
+                                        <b style="color:#d97706; font-size: 13px;">Đã pha xong</b>
+                                    </label>
+                                    <button class="btn-delete" onclick="xoaDon(${o.id})" style="float:right;">Hủy</button>
                                 ` : ''}
                                 ${o.status === 'READY' ? `<b style="color:#d97706; font-size:13px;">⏳ Chờ Ship hốt...</b> <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>` : ''}
                                 ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px;">⚡ ĐANG GIAO...</b>` : ''}
@@ -191,7 +214,6 @@
 
                 for(let name in locations) {
                     const loc = locations[name];
-                    // Chỉ hiển thị trên Radar nếu cập nhật định vị không quá 2 phút
                     if (now - loc.timestamp < 120000) {
                         hasOnline = true;
                         radarDiv.innerHTML += `

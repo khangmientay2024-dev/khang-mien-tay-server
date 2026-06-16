@@ -31,7 +31,6 @@ function getActiveShippers() {
     const now = Date.now();
     const activeList = [];
     for (let name in shipperLocations) {
-        // Nếu shipper có cập nhật GPS trong vòng 120 giây qua thì tính là đang trong ca
         if (now - shipperLocations[name].timestamp < 120000) {
             activeList.push(name);
         }
@@ -62,9 +61,18 @@ app.post('/api/orders', (req, res) => {
         if (match) extractedPhone = match[0];
     }
 
+    // RÀNG BUỘC SỐ ĐIỆN THOẠI 10 SỐ VÀ BẮT ĐẦU BẰNG 0
+    if (!extractedPhone || !/^0\d{9}$/.test(extractedPhone)) {
+        return res.status(400).json({ 
+            success: false, 
+            isInvalidPhone: true, 
+            error: '🚨 LỖI TẠO ĐƠN: Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số (VD: 0912345678).' 
+        });
+    }
+
     const isDuplicate = orders.some(o => {
         const matchContent = o.content.trim().toLowerCase() === content.trim().toLowerCase();
-        const matchPhone = extractedPhone ? o.phone === extractedPhone : true;
+        const matchPhone = o.phone === extractedPhone;
         return matchContent && matchPhone && o.status !== 'DONE';
     });
 
@@ -99,17 +107,15 @@ app.put('/api/orders/:id/ready', (req, res) => {
     const activeShippers = getActiveShippers();
     
     if (activeShippers.length === 1) {
-        // NẾU CHỈ CÓ 1 SHIPPER ONLINE: Tự động giao luôn cho người đó!
         order.status = 'SHIPPING';
         order.shipperName = activeShippers[0];
     } else {
-        // NẾU CÓ TỪ 2 SHIPPER TRỞ LÊN HOẶC CHƯA AI ONLINE: Chuyển trạng thái chờ nhận
         order.status = 'READY';
     }
     res.json({ success: true, autoAssigned: activeShippers.length === 1 });
 });
 
-// 4. SHIPPER CHỦ ĐỘNG NHẬN ĐƠN (Trường hợp ca làm có từ 2 ship trở lên)
+// 4. SHIPPER CHỦ ĐỘNG NHẬN ĐƠN
 app.put('/api/orders/:id/assign', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { shipperName } = req.body;
@@ -147,7 +153,7 @@ app.post('/api/shipper/location', (req, res) => {
             lat, 
             lng, 
             updatedAt: new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            timestamp: Date.now() // Lưu mốc thời gian để tính xem shipper còn online không
+            timestamp: Date.now()
         };
     }
     res.json({ success: true });

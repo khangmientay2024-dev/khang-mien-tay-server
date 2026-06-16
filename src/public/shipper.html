@@ -26,7 +26,6 @@
         
         .gps-status { background: #dcfce7; color: #166534; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: 600; text-align: center; margin-bottom: 15px; border: 1px solid #bbf7d0; }
 
-        /* KHU VỰC SHIPPER COPPY DÁN ĐƠN PHỤ QUÁN */
         .box-shipper-nhap { background: white; padding: 12px; border-radius: 10px; border: 1px solid #cbd5e1; margin-bottom: 15px; }
         .box-shipper-nhap textarea { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; min-height: 60px; font-size: 13px; margin-bottom: 8px; }
 
@@ -131,7 +130,6 @@
             setInterval(loadChat, 2000);
         }
 
-        // HÀM SHIPPER DÁN TẠO ĐƠN
         async function shipperTaoDon() {
             const content = document.getElementById('shipperOrderContent').value;
             if(!content.trim()) return;
@@ -142,7 +140,10 @@
                     body: JSON.stringify({ content })
                 });
                 const data = await res.json();
-                if(!res.ok && data.isDuplicate) { alert(data.error); return; }
+                if(!res.ok) { 
+                    alert(data.error); 
+                    return; 
+                }
                 document.getElementById('shipperOrderContent').value = '';
                 alert("🎉 Đã đẩy đơn xuống màn hình bếp thành công!");
                 layDanhSachDonHang();
@@ -228,7 +229,7 @@
                     const chatDiv = document.getElementById('chatMessages');
                     chatDiv.innerHTML = msgs.map(m => `
                         <div class="msg ${m.sender === shipperCachedName ? 'me' : ''}">
-                            <strong style="color:${m.sender==='BẾP QUÁN'?'#c2410c':'#0369a1'}">${m.sender}</strong> <span style="font-size:11px;color:gray">[${m.time}]</span><br>${m.text}
+                            <strong style="color:${m.sender==='BẾP QUÁN'?'#ea580c':'#0369a1'}">${m.sender}</strong> <span style="font-size:11px;color:gray">[${m.time}]</span><br>${m.text}
                         </div>
                     `).join('');
                     chatDiv.scrollTop = chatDiv.scrollHeight;
