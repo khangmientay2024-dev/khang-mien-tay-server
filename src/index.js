@@ -9,37 +9,52 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// HỆ THỐNG TÀI KHOẢN SHIPPER CỐ ĐỊNH (Có thể sửa đổi hoặc thêm bớt tùy ý ông)
+// TÀI KHOẢN SHIPPER CỐ ĐỊNH
 const SHIPPER_ACCOUNTS = [
-    { username: 'haiduoi05', password: '2005', name: 'Hải' },
-    { username: 'tudoi05', password: '2005', name: 'Tú' },
-    { username: 'khiemkhom05', password: '2005', name: 'Khiêm' }
+    { username: 'ship01', password: '123', name: 'Khang Miền Tây' },
+    { username: 'ship02', password: '123', name: 'Anh An' },
+    { username: 'ship03', password: '123', name: 'Anh Tuấn' }
 ];
 
 let orders = [];
-let shipperLocations = {}; // Lưu GPS của tất cả shipper online: { 'Tên': { lat, lng, updatedAt } }
+let shipperLocations = {}; // { 'Tên': { lat, lng, updatedAt, timestamp } }
+let chatMessages = []; 
 let orderIdCounter = 1;
 
-// 1. API ĐĂNG NHẬP CHO SHIPPER
+// LẤY GIỜ VIỆT NAM CHUẨN
+function getVNTime() {
+    return new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
+}
+
+// THUẬT TOÁN ĐẾM SỐ SHIPPER ĐANG HOẠT ĐỘNG (Trong vòng 2 phút trở lại)
+function getActiveShippers() {
+    const now = Date.now();
+    const activeList = [];
+    for (let name in shipperLocations) {
+        // Nếu shipper có cập nhật GPS trong vòng 120 giây qua thì tính là đang trong ca
+        if (now - shipperLocations[name].timestamp < 120000) {
+            activeList.push(name);
+        }
+    }
+    return activeList;
+}
+
+// 1. ĐĂNG NHẬP
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     const user = SHIPPER_ACCOUNTS.find(u => u.username === username && u.password === password);
-    if (user) {
-        res.json({ success: true, name: user.name });
-    } else {
-        res.status(401).json({ success: false, error: 'Sai tài khoản hoặc mật khẩu rồi ông ơi!' });
-    }
+    if (user) res.json({ success: true, name: user.name });
+    else res.status(401).json({ success: false, error: 'Sai tài khoản hoặc mật khẩu!' });
 });
 
 // LẤY DANH SÁCH ĐƠN HÀNG
 app.get('/api/orders', (req, res) => res.json(orders));
 
-// 2. TIẾP NHẬN ĐƠN MỚI TỪ BẾP + CHECK TRÙNG LẶP
+// 2. TẠO ĐƠN MỚI (Bếp hay Shipper gọi vào đây đều được)
 app.post('/api/orders', (req, res) => {
     const { content, note, deliveryTime, phone } = req.body;
-    if (!content) return res.status(400).json({ error: 'Nội dung trống trơn ông ơi!' });
+    if (!content) return res.status(400).json({ error: 'Nội dung trống!' });
 
-    // Tự động bóc tách số điện thoại
     let extractedPhone = phone || '';
     if (!extractedPhone) {
         const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
@@ -47,18 +62,17 @@ app.post('/api/orders', (req, res) => {
         if (match) extractedPhone = match[0];
     }
 
-    // Thuật toán kiểm tra trùng lặp
     const isDuplicate = orders.some(o => {
         const matchContent = o.content.trim().toLowerCase() === content.trim().toLowerCase();
-        const matchPhone = extractedPhone && o.phone === extractedPhone && o.status !== 'DONE';
-        return matchContent || matchPhone;
+        const matchPhone = extractedPhone ? o.phone === extractedPhone : true;
+        return matchContent && matchPhone && o.status !== 'DONE';
     });
 
     if (isDuplicate) {
         return res.status(400).json({ 
             success: false, 
             isDuplicate: true, 
-            error: `🚨 ĐƠN BỊ TRÙNG! Đơn này đã có trong hệ thống rồi ông ơi!` 
+            error: `🚨 TRÙNG ĐƠN! Đơn này đã có trên hệ thống rồi ông ơi!` 
         });
     }
 
@@ -68,56 +82,56 @@ app.post('/api/orders', (req, res) => {
         note: note || '',
         phone: extractedPhone, 
         deliveryTime: deliveryTime || 'Giao ngay',
-        status: 'PENDING', // PENDING -> SHIPPING -> DONE
+        status: 'PENDING', 
         shipperName: null,
-        createdAt: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        createdAt: getVNTime()
     };
     orders.push(newOrder);
     res.status(201).json({ success: true, order: newOrder });
 });
 
-// 3. SHIPPER BẤM NHẬN GIAO ĐƠN (Hệ thống tự động điền tên người đăng nhập)
+// 3. BẾP BẤM PHA XONG -> TỰ ĐỘNG PHÂN PHỐI NẾU CHỈ CÓ 1 SHIPPER
+app.put('/api/orders/:id/ready', (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return res.status(404).json({ error: 'Không thấy đơn!' });
+    
+    const activeShippers = getActiveShippers();
+    
+    if (activeShippers.length === 1) {
+        // NẾU CHỈ CÓ 1 SHIPPER ONLINE: Tự động giao luôn cho người đó!
+        order.status = 'SHIPPING';
+        order.shipperName = activeShippers[0];
+    } else {
+        // NẾU CÓ TỪ 2 SHIPPER TRỞ LÊN HOẶC CHƯA AI ONLINE: Chuyển trạng thái chờ nhận
+        order.status = 'READY';
+    }
+    res.json({ success: true, autoAssigned: activeShippers.length === 1 });
+});
+
+// 4. SHIPPER CHỦ ĐỘNG NHẬN ĐƠN (Trường hợp ca làm có từ 2 ship trở lên)
 app.put('/api/orders/:id/assign', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { shipperName } = req.body;
     const order = orders.find(o => o.id === orderId);
     
     if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
-    if (order.status !== 'PENDING') return res.status(400).json({ error: 'Đơn này có người nhận rồi ông ơi!' });
+    if (order.status !== 'READY') return res.status(400).json({ error: 'Đơn này trạng thái không hợp lệ hoặc đã có người nhận!' });
 
     order.status = 'SHIPPING';
     order.shipperName = shipperName || 'Shipper Ẩn Danh';
     res.json({ success: true, order });
 });
 
-// 4. CẬP NHẬT TRẠNG THÁI GIAO XONG (DẤU TICK REAL-TIME)
+// 5. CẬP NHẬT GIAO XONG
 app.put('/api/orders/:id/status', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
     const order = orders.find(o => o.id === orderId);
-    if (!order) return res.status(404).json({ error: 'Không thấy đơn' });
-
-    order.status = status;
+    if (order) order.status = status;
     res.json({ success: true });
 });
 
-// 5. CẬP NHẬT TỌA ĐỘ GPS (Cứ online ca làm là tự động truyền về máy chủ)
-app.post('/api/shipper/location', (req, res) => {
-    const { shipperName, lat, lng } = req.body;
-    if (!shipperName) return res.status(400).json({ error: 'Thiếu tên shipper' });
-
-    shipperLocations[shipperName] = {
-        lat,
-        lng,
-        updatedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    };
-    res.json({ success: true });
-});
-
-// LẤY VỊ TRÍ TẤT CẢ SHIPPER ĐỂ HIỂN THỊ LÊN RADAR BẾP
-app.get('/api/shipper/locations', (req, res) => res.json(shipperLocations));
-
-// HỦY/XÓA ĐƠN HÀNG TRÊN BẾP
 app.delete('/api/orders/:id', (req, res) => {
     const orderId = parseInt(req.params.id);
     const index = orders.findIndex(o => o.id === orderId);
@@ -125,7 +139,31 @@ app.delete('/api/orders/:id', (req, res) => {
     res.json({ success: true });
 });
 
-// XUẤT FILE EXCEL
+// CẬP NHẬT TỌA ĐỘ VÀ THỜI GIAN THỰC
+app.post('/api/shipper/location', (req, res) => {
+    const { shipperName, lat, lng } = req.body;
+    if (shipperName) {
+        shipperLocations[shipperName] = { 
+            lat, 
+            lng, 
+            updatedAt: new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            timestamp: Date.now() // Lưu mốc thời gian để tính xem shipper còn online không
+        };
+    }
+    res.json({ success: true });
+});
+
+app.get('/api/shipper/locations', (req, res) => res.json(shipperLocations));
+
+// TRÒ CHUYỆN REALTIME
+app.get('/api/chat', (req, res) => res.json(chatMessages));
+app.post('/api/chat', (req, res) => {
+    const { sender, text } = req.body;
+    chatMessages.push({ sender, text, time: getVNTime() });
+    if(chatMessages.length > 50) chatMessages.shift();
+    res.json({ success: true });
+});
+
 app.get('/api/export-excel', async (req, res) => {
     try {
         if (orders.length === 0) return res.status(400).send('Không có dữ liệu đơn');

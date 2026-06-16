@@ -9,74 +9,130 @@
         :root { --bg-global: #f8fafc; --text-main: #0f172a; --primary: #2563eb; --success: #10b981; --card-bg: #ffffff; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-global); color: var(--text-main); padding: 20px 10px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 15px; }
-        h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px 0; color: #475569; border-left: 4px solid var(--primary); padding-left: 8px; }
         
-        .box-nhap { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 15px; border: 1px solid var(--border); }
+        /* BANNER CẢNH BÁO MẤT MẠNG WI-FI/4G */
+        .network-alert { display: none; background: #ef4444; color: white; text-align: center; padding: 12px; font-weight: 700; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        .container { max-width: 1000px; margin: 20px auto 0 auto; display: flex; flex-direction: column; gap: 15px; }
+        h2 { font-size: 22px; font-weight: 700; color: #1e293b; }
+        h3 { font-size: 15px; font-weight: 600; margin: 15px 0 10px 0; color: #475569; border-left: 4px solid var(--primary); padding-left: 8px; }
+        
+        .box-nhap { background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
         textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; margin-bottom: 10px; }
         .btn { padding: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 14px; }
         .btn-success { background: var(--success); color: white; }
         .btn-excel { background: #1e293b; color: white; margin-top: 10px; }
         
-        /* RADAR GPS */
-        .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; }
         .shipper-loc-item { display: inline-flex; align-items: center; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid #dcfce7; margin-right: 8px; margin-top: 6px; font-size: 13px; }
         .btn-map { background: #16a34a; color: white; text-decoration: none; padding: 3px 8px; border-radius: 4px; margin-left: 8px; font-size: 11px; font-weight: 600; }
 
-        /* THẺ ĐƠN HÀNG */
+        .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+
         .order-list-container { display: flex; flex-direction: column; gap: 8px; }
         .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
         .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
         .badge-shipper { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        
+        .btn-ready { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;}
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; margin-left: 5px; }
+
+        .chat-box { background: white; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 400px; }
+        .chat-header { background: #1e293b; color: white; padding: 10px; border-radius: 12px 12px 0 0; font-weight: 600; font-size: 14px; text-align: center; }
+        .chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
+        .msg { padding: 8px 10px; border-radius: 8px; background: #f1f5f9; width: fit-content; max-width: 90%; word-break: break-all; }
+        .msg.me { background: #dbeafe; align-self: flex-end; border: 1px solid #bfdbfe; }
+        .chat-input-area { display: flex; padding: 10px; border-top: 1px solid var(--border); }
+        .chat-input-area input { flex: 1; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+        .chat-input-area button { background: var(--primary); color: white; border: none; padding: 8px 12px; margin-left: 5px; border-radius: 6px; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
+    <div id="offlineBanner" class="network-alert">🚨 MẤT KẾT NỐI INTERNET TRÊN THIẾT BỊ! Vui lòng kiểm tra lại Wifi hoặc 4G...</div>
+
     <div class="container">
-        <h2>☕ KHANG MIỀN TÂY - MÀN HÌNH ĐIỀU PHỐI</h2>
+        <h2>☕ KHANG MIỀN TÂY - BẾP & ĐIỀU PHỐI</h2>
 
         <div class="box-radar">
-            <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER ĐANG LÀM VIỆC (24/7):</strong>
-            <div id="shipper-radar-list" style="margin-top: 5px; font-size: 13px; color: gray;">Đang dò tìm sóng GPS từ app shipper...</div>
+            <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER TRONG CA:</strong>
+            <div id="shipper-radar-list" style="margin-top: 5px; font-size: 13px; color: gray;">Đang dò tìm sóng GPS...</div>
         </div>
 
-        <div class="box-nhap">
-            <textarea id="orderContent" placeholder="Dán hóa đơn, nội dung tin nhắn chốt đơn vào đây..."></textarea>
-            <button class="btn btn-success" onclick="taoDonHang()">🚀 XỬ LÝ & ĐẨY XUỐNG BẾP PHA CHẾ</button>
-            <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 TẢI FILE EXCEL BÁO CÁO DOANH THU</button>
+        <div class="grid-layout">
+            <div>
+                <div class="box-nhap">
+                    <textarea id="orderContent" placeholder="Dán hóa đơn, nội dung tin nhắn chốt đơn vào đây..."></textarea>
+                    <button class="btn btn-success" onclick="taoDonHang()">🚀 TẠO ĐƠN & GỬI XUỐNG BẾP</button>
+                    <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 XUẤT EXCEL BÁO CÁO</button>
+                </div>
+
+                <h3>🔥 1. BẾP ĐANG PHA CHẾ (Xong bấm nút kế bên)</h3>
+                <div id="list-pending" class="order-list-container"></div>
+
+                <h3>📦 2. ĐƠN CHỜ SHIPPER ĐẾN NHẬN (Nhiều hơn 2 ship online)</h3>
+                <div id="list-ready" class="order-list-container"></div>
+
+                <h3>🛵 3. SHIPPER ĐANG TRÊN ĐƯỜNG ĐI GIAO</h3>
+                <div id="list-shipping" class="order-list-container"></div>
+                
+                <h3>✅ 4. LỊCH SỬ ĐÃ GIAO XONG XUYÊN SUỐT CA</h3>
+                <div id="list-done" class="order-list-container"></div>
+            </div>
+
+            <div>
+                <div class="chat-box">
+                    <div class="chat-header">💬 KÊNH LIÊN LẠC BẾP - SHIPPER</div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Nhắn tin cho shipper..." onkeypress="if(event.key==='Enter') guiTinNhan()">
+                        <button onclick="guiTinNhan()">Gửi</button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <h3>⏳ 1. ĐƠN CHỜ PHA CHẾ TRONG BẾP / CHỜ SHIP HỐT ĐI:</h3>
-        <div id="list-pending" class="order-list-container"></div>
-
-        <h3>🛵 2. ĐƠN ĐANG TRÊN ĐƯỜNG ĐI GIAO (REAL-TIME):</h3>
-        <div id="list-shipping" class="order-list-container"></div>
-
-        <h3>✅ 3. LỊCH SỬ ĐƠN ĐÃ GIAO THÀNH CÔNG (CÓ DẤU TICK XONG):</h3>
-        <div id="list-done" class="order-list-container"></div>
     </div>
 
     <script>
+        // KIỂM TRA TRẠNG THÁI MẠNG TỰ ĐỘNG
+        window.addEventListener('online', () => document.getElementById('offlineBanner').style.display = 'none');
+        window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display = 'block');
+
         async function taoDonHang() {
             const content = document.getElementById('orderContent').value;
             if(!content.trim()) return;
 
-            const res = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
-            const data = await res.json();
-            
-            // Nếu bị trùng đơn, báo lỗi ngay lập tức
-            if(!res.ok && data.isDuplicate) {
-                alert(data.error); 
-                return;
-            }
+            try {
+                const res = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const data = await res.json();
+                if(!res.ok && data.isDuplicate) { alert(data.error); return; }
+                document.getElementById('orderContent').value = '';
+                layDuLieu();
+            } catch(e) {}
+        }
 
-            document.getElementById('orderContent').value = '';
-            layDuLieu();
+        async function statusPhaXong(id) {
+            try {
+                const res = await fetch(`/api/orders/${id}/ready`, { method: 'PUT' });
+                const data = await res.json();
+                if (data.autoAssigned) {
+                    alert("💡 Vì ca làm hiện tại chỉ có 1 shipper online, hệ thống đã tự gán thẳng đơn này cho họ luôn!");
+                }
+                layDuLieu();
+            } catch(e) {}
+        }
+
+        async function xoaDon(id) {
+            if(confirm('Ông có chắc muốn hủy bỏ đơn này?')) {
+                try {
+                    await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                    layDuLieu();
+                } catch(e) {}
+            }
         }
 
         async function layDuLieu() {
@@ -85,10 +141,11 @@
                 const orders = await res.json();
 
                 const pDiv = document.getElementById('list-pending');
+                const rDiv = document.getElementById('list-ready');
                 const sDiv = document.getElementById('list-shipping');
                 const dDiv = document.getElementById('list-done');
 
-                pDiv.innerHTML = ''; sDiv.innerHTML = ''; dDiv.innerHTML = '';
+                pDiv.innerHTML = ''; rDiv.innerHTML = ''; sDiv.innerHTML = ''; dDiv.innerHTML = '';
 
                 orders.forEach(o => {
                     let text = o.content;
@@ -101,28 +158,25 @@
                                 ${o.shipperName ? `<br><span class="badge-shipper">👤 Người giao: ${o.shipperName}</span>` : ''}
                             </div>
                             <div>
-                                ${o.status === 'PENDING' ? `<button class="btn-delete" onclick="xoaDon(${o.id})">Hủy đơn</button>` : ''}
+                                ${o.status === 'PENDING' ? `
+                                    <button class="btn-ready" onclick="statusPhaXong(${o.id})">✅ Pha Xong</button>
+                                    <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>
+                                ` : ''}
+                                ${o.status === 'READY' ? `<b style="color:#d97706; font-size:13px;">⏳ Chờ Ship hốt...</b> <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>` : ''}
                                 ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px;">⚡ ĐANG GIAO...</b>` : ''}
-                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px;">✅ ĐÃ GIAO XONG ✓</b>` : ''}
+                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px;">✅ GIAO XONG ✓</b>` : ''}
                             </div>
                         </div>`;
 
                     if(o.status === 'PENDING') pDiv.innerHTML += cardHTML;
+                    else if(o.status === 'READY') rDiv.innerHTML += cardHTML;
                     else if(o.status === 'SHIPPING') sDiv.innerHTML += cardHTML;
                     else if(o.status === 'DONE') dDiv.innerHTML += cardHTML;
                 });
 
-                if(!pDiv.innerHTML) pDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Hiện tại quán đang trống đơn chờ pha chế.</div>';
-                if(!sDiv.innerHTML) sDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Chưa có shipper nào đi ngoài đường.</div>';
-                if(!dDiv.innerHTML) dDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Chưa có đơn hoàn thành.</div>';
+                if(!pDiv.innerHTML) pDiv.innerHTML = '<div style="color:gray;font-size:13px;">Bếp đang trống đơn chờ pha chế.</div>';
+                if(!rDiv.innerHTML) rDiv.innerHTML = '<div style="color:gray;font-size:13px;">Không có đơn treo chờ ship.</div>';
             } catch(e){}
-        }
-
-        async function xoaDon(id) {
-            if(confirm('Ông có chắc muốn hủy bỏ đơn hàng này không?')) {
-                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-                layDuLieu();
-            }
         }
 
         async function capNhatRadarShipper() {
@@ -131,28 +185,64 @@
                 const locations = await res.json();
                 const radarDiv = document.getElementById('shipper-radar-list');
                 
-                if(Object.keys(locations).length === 0) {
-                    radarDiv.innerHTML = 'Hiện chưa có shipper nào mở app đăng nhập ca làm.';
-                    return;
-                }
-                
+                const now = Date.now();
+                let hasOnline = false;
                 radarDiv.innerHTML = '';
+
                 for(let name in locations) {
                     const loc = locations[name];
-                    const googleMapsUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-                    radarDiv.innerHTML += `
-                        <div class="shipper-loc-item">
-                            🟢 <strong>${name}</strong> (Cập nhật: ${loc.updatedAt})
-                            <a href="${googleMapsUrl}" target="_blank" class="btn-map">📍 XEM VỊ TRÍ TRÊN MAPS</a>
-                        </div>`;
+                    // Chỉ hiển thị trên Radar nếu cập nhật định vị không quá 2 phút
+                    if (now - loc.timestamp < 120000) {
+                        hasOnline = true;
+                        radarDiv.innerHTML += `
+                            <div class="shipper-loc-item">
+                                🟢 <strong>${name}</strong> (${loc.updatedAt})
+                                <a href="https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}" target="_blank" class="btn-map">📍 XEM MAPS</a>
+                            </div>`;
+                    }
+                }
+                if(!hasOnline) radarDiv.innerHTML = 'Chưa có shipper nào mở app bật định vị làm việc.';
+            } catch(e){}
+        }
+
+        let lastMsgCount = 0;
+        async function loadChat() {
+            try {
+                const res = await fetch('/api/chat');
+                const msgs = await res.json();
+                if(msgs.length !== lastMsgCount) {
+                    const chatDiv = document.getElementById('chatMessages');
+                    chatDiv.innerHTML = msgs.map(m => `
+                        <div class="msg ${m.sender === 'BẾP QUÁN' ? 'me' : ''}">
+                            <strong style="color:#0369a1">${m.sender}</strong> <span style="font-size:11px;color:gray">[${m.time}]</span><br>${m.text}
+                        </div>
+                    `).join('');
+                    chatDiv.scrollTop = chatDiv.scrollHeight;
+                    lastMsgCount = msgs.length;
                 }
             } catch(e){}
         }
 
+        async function guiTinNhan() {
+            const input = document.getElementById('chatInput');
+            if(!input.value.trim()) return;
+            try {
+                await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: 'BẾP QUÁN', text: input.value.trim() })
+                });
+                input.value = '';
+                loadChat();
+            } catch(e) {}
+        }
+
         setInterval(layDuLieu, 3000);
         setInterval(capNhatRadarShipper, 4000);
+        setInterval(loadChat, 2000);
         layDuLieu();
         capNhatRadarShipper();
+        loadChat();
     </script>
 </body>
 </html>
