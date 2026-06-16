@@ -1,43 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <title>KHANG MIỀN TÂY - Điều Phối & Pha Chế</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        .order-card { display: flex; align-items: center; gap: 15px; border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-        .check-box { width: 30px; height: 30px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f4f6f9; }
+        .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        textarea { width: 100%; margin-bottom: 10px; padding: 12px; box-sizing: border-box; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; resize: vertical; }
+        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        .order-card { background: white; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .btn-sua { background: #007bff; color: white; border: none; padding: 5px 10px; cursor: pointer; margin-right: 5px; border-radius: 4px; }
+        .btn-xoa { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .box-gom { background: #e2e3e5; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .phone-highlight { background: #fff3cd; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #dc3545; border: 1px dashed #dc3545; }
     </style>
 </head>
 <body>
-    <h2>ĐIỀU PHỐI PHA CHẾ</h2>
-    <textarea id="txt" rows="3" style="width:100%"></textarea>
-    <button onclick="add()">THÊM ĐƠN</button>
-    <hr>
-    <input id="shipper" placeholder="Tên shipper...">
-    <button onclick="sendBatch()">BẮN ĐỢT CHO SHIPPER</button>
-    <div id="list"></div>
+    <h2>☕ QUẦY ĐIỀU PHỐI & PHA CHẾ - KHANG MIỀN TÂY</h2>
+
+    <div class="box-nhap">
+        <label style="font-weight: bold; font-size: 16px; color: #333;">📝 DÁN NỘI DUNG ĐƠN HÀNG VÀO ĐÂY (Hỗ trợ chuỗi gộp tự do):</label>
+        <textarea id="orderContent" placeholder="Ví dụ dán vào: 1 matcha latte xl, b3, 0945224444&#10;Hoặc dán: 1 matcha cho bạn đợi dưới tòa không có sđt vẫn nhận tuốt!" rows="3" style="margin-top: 10px;"></textarea>
+        <button class="btn-gui" onclick="taoDonHang()">🚀 THÊM VÀO HÀNG ĐỢI PHA CHẾ</button>
+    </div>
+
+    <div class="box-gom">
+        <h3>🏃‍♂️ Gom đợt giao hàng cho Shipper</h3>
+        <input type="text" id="shipperName" placeholder="Tên tài xế phụ trách chạy đợt này..." style="width: 50%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+        <button style="padding: 10px 20px; background: #ffc107; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; color: #333;" onclick="gomDonTheoDot()">🚀 BẮN ĐỢT GIAO CHO SHIPPER</button>
+    </div>
+
+    <h3>⏳ Các đơn hàng đang chờ pha chế:</h3>
+    <div id="list-orders"></div>
 
     <script>
-        async function load() {
+        async function taoDonHang() {
+            const content = document.getElementById('orderContent').value;
+            if(!content.trim()) return alert('Chưa dán nội dung đơn hàng ông ơi!');
+
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+
+            document.getElementById('orderContent').value = '';
+            layDonHang();
+        }
+
+        async function layDonHang() {
             const res = await fetch('/api/orders');
+            const orders = await res.json();
+            const listDiv = document.getElementById('list-orders');
+            listDiv.innerHTML = '';
+
+            const pendings = orders.filter(o => o.status === 'PENDING');
+            if(pendings.length === 0) listDiv.innerHTML = '<p>Sạch đơn! Không còn đơn nào chờ.</p>';
+
+            pendings.forEach(o => {
+                // Làm nổi bật SĐT ở màn hình điều phối để dễ nhìn
+                let textHienThi = o.content;
+                if(o.phone) {
+                    textHienThi = textHienThi.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
+                }
+
+                listDiv.innerHTML += `
+                    <div class="order-card">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <input type="checkbox" name="orderSelect" value="${o.id}" style="transform: scale(1.5); cursor:pointer;">
+                            <div>
+                                <strong>Đơn #${o.id}</strong> ➔ ${textHienThi}
+                            </div>
+                        </div>
+                        <div>
+                            <button class="btn-sua" onclick="suaDon(${o.id}, '${o.content}')">✏️ Sửa</button>
+                            <button class="btn-xoa" onclick="xoaDon(${o.id})">❌ Hủy</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        async function gomDonTheoDot() {
+            const shipperName = document.getElementById('shipperName').value;
+            const checkboxes = document.querySelectorAll('input[name="orderSelect"]:checked');
+            const orderIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if(orderIds.length === 0) return alert('Tích chọn đơn để gom đợt đi ông!');
+
+            const res = await fetch('/api/batches', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderIds, shipperName })
+            });
             const data = await res.json();
-            document.getElementById('list').innerHTML = data.filter(o => o.status === 'PENDING').map(o => `
-                <div class="order-card">
-                    <input type="checkbox" class="check-box" value="${o.id}">
-                    <span>Đơn #${o.id}: ${o.content}</span>
-                </div>
-            `).join('');
+            if(data.success) {
+                alert(`Đã bắn thành công Đợt giao #${data.batch.id} cho Shipper!`);
+                document.getElementById('shipperName').value = '';
+                layDonHang();
+            }
         }
-        async function add() {
-            await fetch('/api/orders', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({content: document.getElementById('txt').value})});
-            load();
+
+        async function suaDon(id, oldContent) {
+            const content = prompt("Sửa lại thông tin đơn hàng gộp:", oldContent);
+            if (content === null || !content.trim()) return;
+
+            await fetch(`/api/orders/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            layDonHang();
         }
-        async function sendBatch() {
-            const ids = Array.from(document.querySelectorAll('.check-box:checked')).map(c => c.value);
-            await fetch('/api/batches', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({orderIds: ids, shipperName: document.getElementById('shipper').value})});
-            alert('Đã gửi!'); load();
+
+        async function xoaDon(id) {
+            if(confirm(`Xác nhận HỦY hẳn đơn #${id}?`)) {
+                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                layDonHang();
+            }
         }
-        load();
+
+        layDonHang();
+        setInterval(layDonHang, 5000);
     </script>
 </body>
 </html>

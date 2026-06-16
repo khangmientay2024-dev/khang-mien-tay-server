@@ -1,31 +1,150 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <style>.batch { border: 2px solid green; padding: 10px; margin: 10px; }</style>
+    <title>KHANG MIỀN TÂY - Đội Ngũ Shipper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 10px auto; padding: 15px; background: #f4f6f9; }
+        .box-nhap { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; border-top: 4px solid #ffc107; }
+        textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .btn-gui { width: 100%; padding: 10px; background: #ffc107; color: #333; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 8px; }
+        
+        .batch-card { background: #e8f5e9; border-left: 6px solid #28a745; padding: 15px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .batch-delivering { background: #e3f2fd; border-left: 6px solid #1565c0; }
+        
+        /* LINK GỌI ĐIỆN TÔ ĐẬM DÀNH CHO SHIPPER */
+        .phone-call-link { font-weight: bold; font-size: 19px; color: #d32f2f; text-decoration: underline; background: #fff; padding: 2px 6px; border-radius: 4px; border: 1px solid #d32f2f; display: inline-block; margin: 2px 0; }
+        
+        .order-li { background: white; padding: 12px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #e0e0e0; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .order-done { background: #f5f5f5; color: #9e9e9e; text-decoration: line-through; border-left: 4px solid #9e9e9e; }
+        
+        .btn-tick-le { background: #28a745; color: white; border: none; padding: 8px 12px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 13px; flex-shrink: 0; }
+        .btn-nhanchuyen { background: #1565c0; color: white; width: 100%; padding: 12px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; font-size: 15px; margin-top: 10px; }
+        ul { padding: 0; margin: 10px 0; }
+    </style>
 </head>
 <body>
-    <h2>ĐỘI NGŨ SHIPPER</h2>
-    <div id="list"></div>
+    <h2>🚀 ĐỘI NGŨ SHIPPER - KHANG MIỀN TÂY</h2>
+
+    <div class="box-nhap">
+        <h3 style="margin-top: 0; color: #856404; font-size: 16px;">🤝 SHIPPER HỖ TRỢ LÊN ĐƠN NHANH</h3>
+        <textarea id="orderContent" placeholder="Dán nguyên cụm tin nhắn text thô của khách vào đây..." rows="2"></textarea>
+        <button class="btn-gui" onclick="taoDonHang()">🚀 ĐẨY ĐƠN VÀO BẾP CHO PHA CHẾ</button>
+    </div>
+
+    <button style="background: #6c757d; padding: 8px 15px; width: 100%; color: white; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;" onclick="layDanhSachDot()">🔄 TẢI LẠI CHUYẾN ĐI</button>
+    
+    <h3>🚨 Các chuyến hàng cần chạy:</h3>
+    <div id="list-batches"></div>
+
+    <hr>
+    <button style="background: #0097a7; color: white; width: 100%; padding: 12px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;" onclick="xuatExcel()">📊 XUẤT BÁO CÁO DOANH THU EXCEL</button>
+
     <script>
-        async function load() {
-            const [bRes, oRes] = await Promise.all([fetch('/api/batches'), fetch('/api/orders')]);
-            const batches = await bRes.json();
-            const orders = await oRes.json();
-            document.getElementById('list').innerHTML = batches.filter(b => b.status !== 'DONE').map(b => `
-                <div class="batch">
-                    <h3>Đợt #${b.id} - ${b.shipperName}</h3>
-                    ${b.orderIds.map(id => {
-                        const o = orders.find(x => x.id == id);
-                        return `<div>${o.content} <button onclick="done(${o.id})">✔️ Giao Xong</button></div>`;
-                    }).join('')}
-                    <button onclick="start(${b.id})">NHẬN CHUYẾN</button>
-                </div>
-            `).join('');
+        async function taoDonHang() {
+            const content = document.getElementById('orderContent').value;
+            if(!content.trim()) return alert('Có chữ đâu mà nhập ông ơi!');
+
+            const res = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert('Đã đẩy đơn thô sang quầy pha chế thành công!');
+                document.getElementById('orderContent').value = '';
+            }
         }
-        async function done(id) { await fetch(`/api/orders/${id}/status`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'DONE'})}); load(); }
-        async function start(id) { await fetch(`/api/batches/${id}/status`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({status:'DELIVERING'})}); load(); }
-        setInterval(load, 3000); load();
+
+        async function layDanhSachDot() {
+            const resBatch = await fetch('/api/batches');
+            const batches = await resBatch.json();
+            const resOrder = await fetch('/api/orders');
+            const orders = await resOrder.json();
+
+            const listDiv = document.getElementById('list-batches');
+            listDiv.innerHTML = '';
+
+            const activeBatches = batches.filter(b => b.status !== 'DONE');
+            if(activeBatches.length === 0) {
+                listDiv.innerHTML = '<p>Bếp chưa gom đợt nào mới. Ngồi uống trà đá xíu đi ông!</p>';
+                return;
+            }
+
+            activeBatches.forEach(b => {
+                let listOrdersHTML = '';
+                const isDelivering = b.status === 'DELIVERING';
+
+                b.orderIds.forEach(id => {
+                    const ord = orders.find(o => o.id === id);
+                    if(ord) {
+                        const isSingleDone = ord.status === 'DONE';
+                        
+                        // Xử lý biến đổi Số điện thoại trong chuỗi thô thành Link Gọi Điện
+                        let contentText = ord.content;
+                        if(ord.phone) {
+                            contentText = contentText.replace(ord.phone, `<a href="tel:${ord.phone}" class="phone-call-link">📱 BẤM GỌI: ${ord.phone}</a>`);
+                        }
+
+                        listOrdersHTML += `
+                            <li class="order-li ${isSingleDone ? 'order-done' : ''}">
+                                <div>
+                                    📦 <strong>Đơn #${ord.id}:</strong> ${contentText}
+                                </div>
+                                ${(!isSingleDone && isDelivering)
+                                    ? `<button class="btn-tick-le" onclick="tickGiaoThanhCongLe(${ord.id})">✔️ Giao Xong</button>`
+                                    : (isSingleDone ? '<span style="color:#28a745; font-weight:bold; font-size:13px;">✓ Đã Giao</span>' : '')
+                                }
+                            </li>`;
+                    }
+                });
+
+                listDiv.innerHTML += `
+                    <div class="batch-card ${isDelivering ? 'batch-delivering' : ''}">
+                        <h4>📦 ĐỢT CHẠY #${b.id} (${isDelivering ? 'ĐANG ĐI SHIP' : 'ĐANG CHỜ XÁC NHẬN'})</h4>
+                        <p style="margin: 5px 0;">👤 Shipper phụ trách: <strong>${b.shipperName}</strong></p>
+                        <ul>${listOrdersHTML}</ul>
+                        
+                        ${!isDelivering 
+                            ? `<button class="btn-nhanchuyen" onclick="capNhatTrangThaiDot(${b.id}, 'DELIVERING')">🛵 BẤM NHẬN CHẠY CHUYẾN NÀY</button>`
+                            : `<p style="text-align:center; color:#1565c0; font-size:13px; font-weight:bold; margin-top:10px;">👉 Hãy bấm nút "✔️ Giao Xong" ở từng đơn khi giao tới tay khách!</p>`
+                        }
+                    </div>
+                `;
+            });
+        }
+
+        // HÀM TICK HOÀN THÀNH TỪNG ĐƠN LẺ KHÁCH HÀNG YÊU CẦU
+        async function tickGiaoThanhCongLe(orderId) {
+            if(confirm(`Xác nhận đã giao thành công đơn hàng lẻ này?`)) {
+                await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'DONE' })
+                });
+                layDanhSachDot(); // Tải lại giao diện
+            }
+        }
+
+        async function capNhatTrangThaiDot(id, status) {
+            await fetch(`/api/batches/${id}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            layDanhSachDot();
+        }
+
+        async function xuatExcel() {
+            const res = await fetch('/api/export-excel', { method: 'POST' });
+            const data = await res.json();
+            if(data.success) alert('Đã tạo thành công file Excel doanh thu!');
+        }
+
+        layDanhSachDot();
+        setInterval(layDanhSachDot, 7000);
     </script>
 </body>
 </html>
