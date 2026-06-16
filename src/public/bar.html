@@ -2,51 +2,55 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>KHANG MIỀN TÂY - Pha Chế</title>
+    <title>KHANG MIỀN TÂY - Điều Phối & Pha Chế</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f4f6f9; }
-        h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f4f6f9; }
         .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
         textarea, input { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
         .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .order-card { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .btn-goi { padding: 10px 20px; background: #dc3545; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        .btn-lammoi { padding: 8px 15px; background: #007bff; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .order-card { background: white; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .badge-time { background: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .btn-sua { background: #007bff; color: white; border: none; padding: 5px 10px; cursor: pointer; margin-right: 5px; border-radius: 4px; }
+        .btn-xoa { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .box-gom { background: #e2e3e5; padding: 15px; border-radius: 8px; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <h2>☕ KHANG MIỀN TÂY - Bộ Phận Pha Chế</h2>
+    <h2>☕ QUẦY ĐIỀU PHỐI & PHA CHẾ - KHANG MIỀN TÂY</h2>
 
     <div class="box-nhap">
-        <h3>✍️ Dán đơn hàng mới tại đây</h3>
-        <textarea id="content" placeholder="Copy nội dung đơn dán vào đây... (Ví dụ: 2 Trà sữa, 1 Hồng trà)" rows="3"></textarea>
-        <input type="text" id="note" placeholder="Địa chỉ hoặc Ghi chú shipper">
-        <button class="btn-gui" onclick="taoDonHang()">Thêm vào danh sách pha chế</button>
+        <h3>✍️ Thêm đơn hàng mới</h3>
+        <textarea id="content" placeholder="Nội dung đơn..." rows="2"></textarea>
+        <input type="text" id="note" placeholder="Địa chỉ giao hàng">
+        <input type="text" id="deliveryTime" placeholder="Hẹn giờ giao (Ví dụ: 15h30, hoặc bỏ trống nếu muốn Giao Ngay)">
+        <button class="btn-gui" onclick="taoDonHang()">Thêm Vào Hàng Đợi</button>
     </div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>⏳ Danh Sách Đang Pha Chế</h3>
-        <button class="btn-lammoi" onclick="layDonHang()">🔄 Cập nhật đơn</button>
+    <div class="box-gom">
+        <h3>🏃‍♂️ Gom đợt giao hàng cho Shipper</h3>
+        <input type="text" id="shipperName" placeholder="Tên shipper chạy đợt này (Ví dụ: Anh Khang, Ship Grab...)" style="width: 60%; padding: 8px;">
+        <button style="padding: 8px 15px; background: #ffc107; font-weight: bold; border: none; cursor: pointer;" onclick="gomDonTheoDot()">🚀 BẮN ĐỢT GIAO CHO SHIPPER</button>
     </div>
-    <div id="list-orders" style="margin-top: 15px;"></div>
+
+    <h3>⏳ Các đơn hàng đang chờ pha chế / chờ giao:</h3>
+    <div id="list-orders"></div>
 
     <script>
         async function taoDonHang() {
             const content = document.getElementById('content').value;
             const note = document.getElementById('note').value;
-            if(!content) return alert('Dán nội dung đơn vào đã ông ơi!');
+            const deliveryTime = document.getElementById('deliveryTime').value;
+            if(!content) return alert('Nhập món đã ông ơi!');
 
-            const res = await fetch('/api/orders', {
+            await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content, note })
+                body: JSON.stringify({ content, note, deliveryTime })
             });
-            const data = await res.json();
-            if(data.success) {
-                document.getElementById('content').value = '';
-                document.getElementById('note').value = '';
-                layDonHang();
-            }
+            document.getElementById('content').value = '';
+            document.getElementById('note').value = '';
+            document.getElementById('deliveryTime').value = '';
+            layDonHang();
         }
 
         async function layDonHang() {
@@ -55,36 +59,73 @@
             const listDiv = document.getElementById('list-orders');
             listDiv.innerHTML = '';
 
-            // Lọc các đơn PENDING (Chờ pha chế)
             const pendings = orders.filter(o => o.status === 'PENDING');
-            if(pendings.length === 0) listDiv.innerHTML = '<p style="color: #666;">Hiện tại chưa có đơn nào cần làm.</p>';
-            
+            if(pendings.length === 0) listDiv.innerHTML = '<p>Không còn đơn nào chờ.</p>';
+
             pendings.forEach(o => {
                 listDiv.innerHTML += `
                     <div class="order-card">
-                        <h4>ĐƠN HÀNG #${o.id}</h4>
-                        <p><strong>Chi tiết:</strong> ${o.content}</p>
-                        <p><strong>Ghi chú:</strong> ${o.note || 'Không có'}</p>
-                        <button class="btn-goi" onclick="goiShip(${o.id})">🔔 Xong rồi - GỌI SHIPPER LÊN ĐƠN!</button>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <input type="checkbox" name="orderSelect" value="${o.id}" style="transform: scale(1.4);">
+                            <div>
+                                <strong>Đơn #${o.id}</strong> - ${o.content} <br>
+                                <small>📍 LƯU Ý: ${o.note || 'Không có'}</small>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge-time">🕒 Hẹn: ${o.deliveryTime}</span>
+                            <button class="btn-sua" onclick="suaDon(${o.id}, '${o.content}', '${o.note}', '${o.deliveryTime}')">✏️ Sửa</button>
+                            <button class="btn-xoa" onclick="xoaDon(${o.id})">❌ Hủy</button>
+                        </div>
                     </div>
                 `;
             });
         }
-        
-        async function goiShip(id) {
-            const res = await fetch(`/api/orders/${id}/status`, {
-                method: 'PUT',
+
+        async function gomDonTheoDot() {
+            const shipperName = document.getElementById('shipperName').value;
+            const checkboxes = document.querySelectorAll('input[name="orderSelect"]:checked');
+            const orderIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if(orderIds.length === 0) return alert('Tích chọn vài đơn để gom đợt đi ông!');
+
+            const res = await fetch('/api/batches', {
+                method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'READY' })
+                body: JSON.stringify({ orderIds, shipperName })
             });
             const data = await res.json();
             if(data.success) {
-                alert(`Đã phát tín hiệu gọi Ship cho đơn #${id}!`);
+                alert(`Đã gom thành công Đợt giao #${data.batch.id} chuyển cho Shipper!`);
+                document.getElementById('shipperName').value = '';
+                layDonHang();
+            }
+        }
+
+        async function suaDon(id, oldContent, oldNote, oldTime) {
+            const content = prompt("Sửa nội dung món:", oldContent);
+            const note = prompt("Sửa ghi chú/địa chỉ:", oldNote);
+            const deliveryTime = prompt("Sửa giờ hẹn giao:", oldTime);
+
+            if (content === null) return; // Bấm cancel không làm gì
+
+            await fetch(`/api/orders/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content, note, deliveryTime })
+            });
+            layDonHang();
+        }
+
+        async function xoaDon(id) {
+            if(confirm(`Ông có chắc chắn muốn HỦY đơn hàng #${id} không?`)) {
+                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
                 layDonHang();
             }
         }
 
         layDonHang();
+        setInterval(layDonHang, 5000); // Tự động làm mới mỗi 5 giây
     </script>
 </body>
 </html>

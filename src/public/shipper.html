@@ -2,108 +2,104 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>KHANG MIỀN TÂY - Shipper</title>
+    <title>KHANG MIỀN TÂY - Đội Ngũ Shipper</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 20px; background: #f4f6f9; }
-        h2 { color: #333; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
-        .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        textarea, input { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
-        .order-card { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; margin-bottom: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: chop_nhay 0.8s infinite alternate; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f4f6f9; }
+        .batch-card { background: #d4edda; border-left: 5px solid #28a745; padding: 15px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); animation: chop_nhay 1s infinite alternate; }
         @keyframes chop_nhay { from { box-shadow: 0 0 4px #dc3545; } to { box-shadow: 0 0 16px #dc3545; } }
-        .btn-nhan { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        .btn-lammoi { padding: 8px 15px; background: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; }
+        .batch-delivering { background: #cce5ff; border-left: 5px solid #004085; animation: none; }
+        button { padding: 10px 20px; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; color: white; }
+        .btn-nhan { background: #28a745; }
+        .btn-xong { background: #007bff; }
+        .btn-excel { background: #17a2b8; width: 100%; padding: 12px; font-size: 16px; margin-top: 30px; }
     </style>
 </head>
 <body>
-    <h2>🛵 KHANG MIỀN TÂY - Đội Ngũ Shipper</h2>
+    <h2>🛵 ĐỘI NGŨ SHIPPER - KHANG MIỀN TÂY</h2>
+    <button style="background: #6c757d; padding: 8px 15px;" onclick="layDanhSachDot()">🔄 Cập nhật chuyến xe mới</button>
+    
+    <h3>🚨 Các Đợt Giao Hàng Đang Chờ / Đang Chạy:</h3>
+    <div id="list-batches"></div>
 
-    <div class="box-nhap">
-        <h3>✍️ Shipper tự thêm đơn nhanh</h3>
-        <textarea id="content" placeholder="Copy nội dung đơn dán vào đây..." rows="3"></textarea>
-        <input type="text" id="note" placeholder="Địa chỉ giao hàng">
-        <button class="btn-gui" onclick="taoDonHang()">Thêm đơn vào hàng đợi ship</button>
-    </div>
-
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3>🚨 Đơn Hàng Đang Gọi Ship (Pha chế đã làm xong)</h3>
-        <button class="btn-lammoi" onclick="layDonGiao()">🔄 Kiểm tra đơn mới</button>
-    </div>
-    <div id="list-ship" style="margin-top: 15px;"></div>
+    <hr>
+    <button class="btn-excel" onclick="xuatExcel()">📊 CUỐI NGÀY: Xuất Toàn Bộ Báo Cáo Excel Gửi Đại Ca</button>
 
     <script>
-        async function taoDonHang() {
-            const content = document.getElementById('content').value;
-            const note = document.getElementById('note').value;
-            if(!content) return alert('Dán nội dung đơn vào đã ông ơi!');
+        async function layDanhSachDot() {
+            // Lấy tất cả các đợt giao và thông tin đơn con từ server
+            const resBatch = await fetch('/api/batches');
+            const batches = await resBatch.json();
+            const resOrder = await fetch('/api/orders');
+            const orders = await resOrder.json();
 
-            // Shipper tự tạo đơn thì mặc định cho trạng thái là READY để đi giao luôn
-            const res = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content, note })
-            });
-            const data = await res.json();
-            if(data.success) {
-                // Tự động chuyển đơn vừa tạo sang READY luôn cho shipper thấy
-                await fetch(`/api/orders/${data.order.id}/status`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'READY' })
-                });
-                document.getElementById('content').value = '';
-                document.getElementById('note').value = '';
-                layDonGiao();
-            }
-        }
-
-        async function layDonGiao() {
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
-            const listDiv = document.getElementById('list-ship');
+            const listDiv = document.getElementById('list-batches');
             listDiv.innerHTML = '';
 
-            const readys = orders.filter(o => o.status === 'READY');
-            if(readys.length === 0) {
-                listDiv.innerHTML = '<p style="color: #666;">Chưa có đơn nào pha xong cần gọi ship.</p>';
+            // Chỉ lọc những đợt chưa hoàn thành (READY hoặc DELIVERING)
+            const activeBatches = batches.filter(b => b.status !== 'DONE');
+            
+            if(activeBatches.length === 0) {
+                listDiv.innerHTML = '<p style="color: #666;">Chưa có chuyến hàng nào được gom từ quầy pha chế.</p>';
                 return;
             }
 
-            readys.forEach(o => {
+            activeBatches.forEach(b => {
+                // Tìm danh sách nội dung các đơn con nằm trong đợt này
+                let contentDetails = '';
+                b.orderIds.forEach(id => {
+                    const ord = orders.find(o => o.id === id);
+                    if(ord) contentDetails += `<li><strong>Đơn #${ord.id} [🕒 ${ord.time || ord.deliveryTime}]:</strong> ${ord.content} (📍 Ghi chú: ${ord.note || 'Không'})</li>`;
+                });
+
+                const isDelivering = b.status === 'DELIVERING';
+                
                 listDiv.innerHTML += `
-                    <div class="order-card">
-                        <h3>🚨 CÓ ĐƠN MỚI XONG #${o.id}</h3>
-                        <p><strong>Món:</strong> ${o.content}</p>
-                        <p><strong>Giao đến:</strong> ${o.note || 'Chưa ghi địa chỉ'}</p>
-                        <button class="btn-nhan" onclick="nhanGiaoHang(${o.id})">🛵 BẤM ĐỂ NHẬN ĐƠN</button>
+                    <div class="batch-card ${isDelivering ? 'batch-delivering' : ''}">
+                        <h3>📦 ĐỢT GIAO HÀNG #${b.id} (${isDelivering ? 'ĐANG ĐI GIAO' : 'ĐANG GỌI SHIP!'})</h3>
+                        <p>👤 <strong>Shipper phụ trách:</strong> ${b.shipperName}</p>
+                        <p><strong>Danh sách đơn con cần đi (${b.orderIds.length} đơn):</strong></p>
+                        <ul>${contentDetails}</ul>
+                        
+                        ${!isDelivering 
+                            ? `<button class="btn-nhan" onclick="capNhatDot(${b.id}, 'DELIVERING')">🛵 BẤM ĐỂ NHẬN CHẠY ĐỢT NÀY</button>`
+                            : `<button class="btn-xong" onclick="capNhatDot(${b.id}, 'DONE')">✅ ĐÃ GIAO XONG TOÀN BỘ ĐỢT NÀY</button>`
+                        }
                     </div>
                 `;
-                
-                // Phát tiếng Beep chuông kêu bíp bíp nhắc nhở shipper
-                try {
-                    const context = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = context.createOscillator();
-                    osc.connect(context.destination);
-                    osc.start(); 
-                    osc.stop(context.currentTime + 0.15);
-                } catch(e) { console.log(e); }
+
+                // Nếu có đợt READY mới, phát tiếng chuông báo hiệu cho shipper
+                if(!isDelivering) {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        osc.connect(ctx.destination);
+                        osc.start(); osc.stop(ctx.currentTime + 0.2);
+                    } catch(e){}
+                }
             });
         }
 
-        async function nhanGiaoHang(id) {
-            const res = await fetch(`/api/orders/${id}/status`, {
+        async function capNhatDot(id, status) {
+            const res = await fetch(`/api/batches/${id}/status`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'DELIVERING' })
+                body: JSON.stringify({ status })
             });
             const data = await res.json();
             if(data.success) {
-                alert(`Đã nhận đơn #${id}. Chúc ông vạn dặm bình an!`);
-                layDonGiao();
+                alert(status === 'DELIVERING' ? 'Đã nhận đợt thành công, lên xe chạy cẩn thận ông ơi!' : 'Tuyệt vời, đã hoàn thành chuyến xe!');
+                layDanhSachDot();
             }
         }
 
-        layDonGiao();
+        async function xuatExcel() {
+            const res = await fetch('/api/export-excel', { method: 'POST' });
+            const data = await res.json();
+            if(data.success) alert('Đã tạo thành công file Excel trên hệ thống!');
+        }
+
+        layDanhSachDot();
+        setInterval(layDanhSachDot, 8000); // Tự động reload sau mỗi 8 giây
     </script>
 </body>
 </html>
