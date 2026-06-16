@@ -9,6 +9,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// TÀI KHOẢN CHO BẾP & SHIPPER
+const BARISTA_ACCOUNTS = [
+    { username: 'bep01', password: '123', name: 'Quầy Pha Chế 1' }
+];
+
 const SHIPPER_ACCOUNTS = [
     { username: 'ship01', password: '123', name: 'Khang Miền Tây' },
     { username: 'ship02', password: '123', name: 'Anh An' },
@@ -28,16 +33,21 @@ function getActiveShippers() {
     const now = Date.now();
     const activeList = [];
     for (let name in shipperLocations) {
-        if (now - shipperLocations[name].timestamp < 120000) {
-            activeList.push(name);
-        }
+        if (now - shipperLocations[name].timestamp < 120000) activeList.push(name);
     }
     return activeList;
 }
 
+// ĐĂNG NHẬP
 app.post('/api/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = SHIPPER_ACCOUNTS.find(u => u.username === username && u.password === password);
+    const { username, password, role } = req.body;
+    let user;
+    if (role === 'bep') {
+        user = BARISTA_ACCOUNTS.find(u => u.username === username && u.password === password);
+    } else {
+        user = SHIPPER_ACCOUNTS.find(u => u.username === username && u.password === password);
+    }
+    
     if (user) res.json({ success: true, name: user.name });
     else res.status(401).json({ success: false, error: 'Sai tài khoản hoặc mật khẩu!' });
 });
@@ -57,28 +67,12 @@ app.post('/api/orders', (req, res) => {
     }
 
     if (!extractedPhone || !/^0\d{9}$/.test(extractedPhone)) {
-        return res.status(400).json({ 
-            success: false, 
-            isInvalidPhone: true, 
-            error: '🚨 LỖI: Số điện thoại không hợp lệ! Vui lòng nhập đúng 10 số.' 
-        });
+        return res.status(400).json({ success: false, error: '🚨 LỖI: Số điện thoại không hợp lệ! Nhập đúng 10 số.' });
     }
 
-    const isDuplicate = orders.some(o => {
-        const matchContent = o.content.trim().toLowerCase() === content.trim().toLowerCase();
-        const matchPhone = o.phone === extractedPhone;
-        return matchContent && matchPhone && o.status !== 'DONE';
-    });
+    const isDuplicate = orders.some(o => o.content.trim() === content.trim() && o.phone === extractedPhone && o.status !== 'DONE');
+    if (isDuplicate) return res.status(400).json({ success: false, error: `🚨 TRÙNG ĐƠN!` });
 
-    if (isDuplicate) {
-        return res.status(400).json({ 
-            success: false, 
-            isDuplicate: true, 
-            error: `🚨 TRÙNG ĐƠN! Đơn này đã có trên hệ thống rồi ông ơi!` 
-        });
-    }
-
-    // TÍNH NĂNG MỚI: QUÉT XEM KHÁCH CÓ ĐƠN NÀO ĐANG TREO KHÔNG (ĐỂ GỘP ĐƠN)
     const isSameCustomer = orders.some(o => o.phone === extractedPhone && o.status !== 'DONE');
 
     const newOrder = {
@@ -87,50 +81,60 @@ app.post('/api/orders', (req, res) => {
         note: note || '',
         phone: extractedPhone, 
         deliveryTime: deliveryTime || 'Giao ngay',
-        status: 'PENDING', 
+        status: 'PENDING', // PENDING -> PREPARED (Pha Xong) -> READY/SHIPPING (Gửi đi)
         shipperName: null,
         createdAt: getVNTime()
     };
     orders.push(newOrder);
-    
-    // Trả về thêm biến isSameCustomer để báo cho frontend
     res.status(201).json({ success: true, order: newOrder, isSameCustomer });
 });
 
-app.put('/api/orders/:id/ready', (req, res) => {
+// BẾP BẤM PHA XONG (Chỉ chuyển sang trạng thái chờ gom gửi đi)
+app.put('/api/orders/:id/prepare', (req, res) => {
     const orderId = parseInt(req.params.id);
     const order = orders.find(o => o.id === orderId);
-    if (!order) return res.status(404).json({ error: 'Không thấy đơn!' });
-    
-    const activeShippers = getActiveShippers();
-    
-    if (activeShippers.length === 1) {
-        order.status = 'SHIPPING';
-        order.shipperName = activeShippers[0];
-    } else {
-        order.status = 'READY';
-    }
-    res.json({ success: true, autoAssigned: activeShippers.length === 1 });
+    if (order && order.status === 'PENDING') order.status = 'PREPARED';
+    res.json({ success: true });
 });
 
+// BẾP BẤM GỬI CÁC ĐƠN ĐÃ PHA CHO SHIPPER
+app.post('/api/orders/send-batch', (req, res) => {
+    const activeShippers = getActiveShippers();
+    let count = 0;
+    
+    orders.forEach(o => {
+        if (o.status === 'PREPARED') {
+            if (activeShippers.length === 1) {
+                o.status = 'SHIPPING';
+                o.shipperName = activeShippers[0];
+            } else {
+                o.status = 'READY';
+            }
+            count++;
+        }
+    });
+    res.json({ success: true, count, autoAssigned: activeShippers.length === 1 });
+});
+
+// SHIPPER NHẬN ĐƠN VÀ ĐỔI TRẠNG THÁI
 app.put('/api/orders/:id/assign', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { shipperName } = req.body;
     const order = orders.find(o => o.id === orderId);
     
-    if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
-    if (order.status !== 'READY') return res.status(400).json({ error: 'Đơn này trạng thái không hợp lệ hoặc đã có người nhận!' });
-
-    order.status = 'SHIPPING';
-    order.shipperName = shipperName || 'Shipper Ẩn Danh';
-    res.json({ success: true, order });
+    if (order && order.status === 'READY') {
+        order.status = 'SHIPPING';
+        order.shipperName = shipperName || 'Shipper Ẩn Danh';
+        res.json({ success: true, order });
+    } else {
+        res.status(400).json({ error: 'Đơn này không thể nhận!' });
+    }
 });
 
 app.put('/api/orders/:id/status', (req, res) => {
     const orderId = parseInt(req.params.id);
-    const { status } = req.body;
     const order = orders.find(o => o.id === orderId);
-    if (order) order.status = status;
+    if (order) order.status = req.body.status;
     res.json({ success: true });
 });
 
@@ -141,15 +145,11 @@ app.delete('/api/orders/:id', (req, res) => {
     res.json({ success: true });
 });
 
+// LOCATION & CHAT
 app.post('/api/shipper/location', (req, res) => {
     const { shipperName, lat, lng } = req.body;
     if (shipperName) {
-        shipperLocations[shipperName] = { 
-            lat, 
-            lng, 
-            updatedAt: new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            timestamp: Date.now()
-        };
+        shipperLocations[shipperName] = { lat, lng, updatedAt: getVNTime(), timestamp: Date.now() };
     }
     res.json({ success: true });
 });
@@ -164,9 +164,9 @@ app.post('/api/chat', (req, res) => {
     res.json({ success: true });
 });
 
+// XUẤT EXCEL
 app.get('/api/export-excel', async (req, res) => {
     try {
-        if (orders.length === 0) return res.status(400).send('Không có dữ liệu đơn');
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Khang Mien Tay POS');
         worksheet.columns = [
@@ -174,11 +174,12 @@ app.get('/api/export-excel', async (req, res) => {
             { header: 'Nội Dung', key: 'content', width: 40 },
             { header: 'Số Điện Thoại', key: 'phone', width: 15 },
             { header: 'Shipper Giao', key: 'shipperName', width: 15 },
-            { header: 'Trạng Thái', key: 'status', width: 15 }
+            { header: 'Trạng Thái', key: 'status', width: 15 },
+            { header: 'Thời Gian Tạo', key: 'createdAt', width: 15 }
         ];
         orders.forEach(o => worksheet.addRow(o));
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=Bao_Cao_Don_Hang.xlsx');
+        res.setHeader('Content-Disposition', `attachment; filename=Bao_Cao_Ca_Lam_${new Date().getTime()}.xlsx`);
         await workbook.xlsx.write(res);
         res.end();
     } catch (e) { res.status(500).send(e.message); }

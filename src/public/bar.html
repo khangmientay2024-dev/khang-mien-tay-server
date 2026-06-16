@@ -10,34 +10,42 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-global); color: var(--text-main); padding: 20px 10px; }
         
-        .network-alert { display: none; background: #ef4444; color: white; text-align: center; padding: 12px; font-weight: 700; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .network-alert { display: none; background: #ef4444; color: white; text-align: center; padding: 12px; font-weight: 700; position: fixed; top: 0; left: 0; width: 100%; z-index: 99999; font-size: 14px;}
         
-        .container { max-width: 1000px; margin: 20px auto 0 auto; display: flex; flex-direction: column; gap: 15px; }
-        h2 { font-size: 22px; font-weight: 700; color: #1e293b; }
-        h3 { font-size: 15px; font-weight: 600; margin: 15px 0 10px 0; color: #475569; border-left: 4px solid var(--primary); padding-left: 8px; }
+        .login-box { max-width: 400px; background: white; padding: 25px 20px; border-radius: 12px; border: 1px solid var(--border); margin: 60px auto; }
+        .login-box h2 { text-align: center; margin-bottom: 20px; color: #1e3a8a; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; margin-bottom: 15px;}
+        .btn-login { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; }
+
+        .main-app { display: none; }
+        .container { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;}
+
+        h3 { font-size: 14px; font-weight: 600; margin: 15px 0 10px 0; color: #475569; border-left: 4px solid var(--primary); padding-left: 8px; text-transform: uppercase;}
         
         .box-nhap { background: var(--card-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
         textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; margin-bottom: 10px; }
         .btn { padding: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 14px; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-excel { background: #1e293b; color: white; margin-top: 10px; }
         
         .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; }
         .shipper-loc-item { display: inline-flex; align-items: center; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid #dcfce7; margin-right: 8px; margin-top: 6px; font-size: 13px; }
-        .btn-map { background: #16a34a; color: white; text-decoration: none; padding: 3px 8px; border-radius: 4px; margin-left: 8px; font-size: 11px; font-weight: 600; }
-
+        
         .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
         @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
 
         .order-list-container { display: flex; flex-direction: column; gap: 8px; }
         .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 10px;}
         .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
-        .badge-shipper { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
         
-        .btn-ready { background: #ea580c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; white-space: nowrap;}
-        .btn-delete { background: #ef4444; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; white-space: nowrap;}
+        .btn-action { color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; width: 100%; white-space: nowrap;}
+        .bg-orange { background: #ea580c; }
+        .bg-red { background: #ef4444; }
+        
+        .btn-send-all { background: #059669; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; width: 100%; margin-bottom: 10px; box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.2); text-transform: uppercase;}
 
-        .chat-box { background: white; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 400px; }
+        .chat-box { background: white; border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; height: 500px; }
         .chat-header { background: #1e293b; color: white; padding: 10px; border-radius: 12px 12px 0 0; font-weight: 600; font-size: 14px; text-align: center; }
         .chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 8px; }
         .msg { padding: 8px 10px; border-radius: 8px; background: #f1f5f9; width: fit-content; max-width: 90%; word-break: break-all; }
@@ -48,34 +56,49 @@
     </style>
 </head>
 <body>
-    <div id="offlineBanner" class="network-alert">🚨 MẤT KẾT NỐI INTERNET TRÊN THIẾT BỊ! Vui lòng kiểm tra lại Wifi hoặc 4G...</div>
+    <div id="offlineBanner" class="network-alert">🚨 MẤT KẾT NỐI INTERNET TRÊN THIẾT BỊ!</div>
 
-    <div class="container">
-        <h2>☕ KHANG MIỀN TÂY - BẾP & ĐIỀU PHỐI</h2>
+    <div id="loginSection" class="login-box">
+        <h2>🔒 ĐĂNG NHẬP BẾP</h2>
+        <input type="text" id="username" class="form-control" placeholder="Tài khoản bếp (vd: bep01)...">
+        <input type="password" id="password" class="form-control" placeholder="Mật khẩu...">
+        <button class="btn-login" onclick="xuLyDangNhap()">VÀO CA LÀM VIỆC</button>
+    </div>
+
+    <div id="mainAppSection" class="main-app container">
+        <div class="header-top">
+            <h2 style="font-size: 18px; margin: 0;">☕ <span id="bepName">BẾP KHANG MIỀN TÂY</span></h2>
+            <button class="btn-logout" onclick="nghiCa()">🚪 Nghỉ Ca & Xuất Excel</button>
+        </div>
 
         <div class="box-radar">
             <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER TRONG CA:</strong>
-            <div id="shipper-radar-list" style="margin-top: 5px; font-size: 13px; color: gray;">Đang dò tìm sóng GPS...</div>
+            <div id="shipper-radar-list" style="margin-top: 5px; font-size: 13px; color: gray;">Đang tải...</div>
         </div>
 
         <div class="grid-layout">
             <div>
                 <div class="box-nhap">
                     <textarea id="orderContent" placeholder="Dán hóa đơn, nội dung tin nhắn chốt đơn vào đây..."></textarea>
-                    <button class="btn btn-success" onclick="taoDonHang()">🚀 TẠO ĐƠN & GỬI XUỐNG BẾP</button>
-                    <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 XUẤT EXCEL BÁO CÁO</button>
+                    <button class="btn" style="background:#2563eb; color:white;" onclick="taoDonHang()">🚀 TẠO ĐƠN CHỜ PHA</button>
                 </div>
 
-                <h3 style="margin-top: 20px;">🔥 1. BẾP ĐANG PHA CHẾ</h3>
+                <h3>🔥 1. BẾP ĐANG PHA CHẾ</h3>
                 <div id="list-pending" class="order-list-container"></div>
 
-                <h3>📦 2. ĐƠN CHỜ SHIPPER ĐẾN NHẬN (Nhiều hơn 2 ship online)</h3>
+                <div style="background: #f8fafc; border: 2px dashed #cbd5e1; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                    <h3>✅ 2. ĐÃ PHA XONG (CHỜ Gom Gửi Đi)</h3>
+                    <button class="btn-send-all" onclick="guiHangLoatDonChoShip()">🛵 GỬI TẤT CẢ ĐƠN NÀY CHO SHIPPER</button>
+                    <div id="list-prepared" class="order-list-container"></div>
+                </div>
+
+                <h3 style="margin-top:20px;">📦 3. ĐƠN ĐANG TREO (Shipper chưa tới nhận)</h3>
                 <div id="list-ready" class="order-list-container"></div>
 
-                <h3>🛵 3. SHIPPER ĐANG TRÊN ĐƯỜNG ĐI GIAO</h3>
+                <h3>🛵 4. SHIPPER ĐANG TRÊN ĐƯỜNG ĐI GIAO</h3>
                 <div id="list-shipping" class="order-list-container"></div>
                 
-                <h3>✅ 4. LỊCH SỬ ĐÃ GIAO XONG XUYÊN SUỐT CA</h3>
+                <h3>✅ 5. LỊCH SỬ GIAO XONG CA NÀY</h3>
                 <div id="list-done" class="order-list-container"></div>
             </div>
 
@@ -96,6 +119,53 @@
         window.addEventListener('online', () => document.getElementById('offlineBanner').style.display = 'none');
         window.addEventListener('offline', () => document.getElementById('offlineBanner').style.display = 'block');
 
+        let bepCachedName = localStorage.getItem('bepRealName') || '';
+        if (bepCachedName) hienThiGiaoDienChinh();
+
+        async function xuLyDangNhap() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
+            if (!u || !p) return;
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p, role: 'bep' })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('bepRealName', data.name);
+                    bepCachedName = data.name;
+                    hienThiGiaoDienChinh();
+                } else { alert('Sai tài khoản hoặc mật khẩu Bếp!'); }
+            } catch(e) {}
+        }
+
+        function hienThiGiaoDienChinh() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('mainAppSection').style.display = 'flex';
+            document.getElementById('bepName').innerText = "BẾP: " + bepCachedName.toUpperCase();
+            
+            layDuLieu(); capNhatRadarShipper(); loadChat();
+            setInterval(layDuLieu, 3000);
+            setInterval(capNhatRadarShipper, 4000);
+            setInterval(loadChat, 2000);
+        }
+
+        function nghiCa() {
+            if (confirm('Ông có chắc muốn nghỉ ca? Hệ thống sẽ tải file Excel báo cáo của ngày hôm nay về máy.')) {
+                // Tải file excel
+                window.location.href = '/api/export-excel';
+                
+                // Đợi file tải xong rồi đăng xuất
+                setTimeout(() => {
+                    localStorage.removeItem('bepRealName');
+                    window.location.reload();
+                }, 2000);
+            }
+        }
+
         async function taoDonHang() {
             const content = document.getElementById('orderContent').value;
             if(!content.trim()) return;
@@ -108,14 +178,9 @@
                 });
                 const data = await res.json();
                 
-                if(!res.ok) { 
-                    alert(data.error); 
-                    return; 
-                }
-
-                // CẢNH BÁO NẾU CÙNG 1 KHÁCH ĐẶT NHIỀU ĐƠN
+                if(!res.ok) { alert(data.error); return; }
                 if (data.isSameCustomer) {
-                    alert("⚠️ CHÚ Ý: Khách này (cùng SĐT) đang có đơn khác chưa giao xong. Bếp nhớ lưu ý GỘP ĐƠN cho shipper nhé!");
+                    alert("⚠️ CHÚ Ý: Khách này đang có đơn khác chưa giao xong. Bếp nhớ GỘP ĐƠN cho shipper nhé!");
                 }
                 
                 document.getElementById('orderContent').value = '';
@@ -123,12 +188,23 @@
             } catch(e) {}
         }
 
-        // ĐỔI TỪ TICK SANG BẤM NÚT ĐỂ TRÁNH MẤT STATE KHI REFRESH
-        async function chuyenDonPhaXong(id) {
+        async function chuyenSangDaPha(id) {
             try {
-                await fetch(`/api/orders/${id}/ready`, { method: 'PUT' });
+                await fetch(`/api/orders/${id}/prepare`, { method: 'PUT' });
                 layDuLieu(); 
-            } catch(e) { console.error(e); }
+            } catch(e) {}
+        }
+
+        async function guiHangLoatDonChoShip() {
+            try {
+                const res = await fetch(`/api/orders/send-batch`, { method: 'POST' });
+                const data = await res.json();
+                if(data.count === 0) {
+                    alert("⚠️ Chưa có đơn nào ở trạng thái ĐÃ PHA XONG để gửi đi cả!");
+                } else {
+                    layDuLieu();
+                }
+            } catch(e) {}
         }
 
         async function xoaDon(id) {
@@ -145,67 +221,69 @@
                 const res = await fetch('/api/orders');
                 const orders = await res.json();
 
-                const pDiv = document.getElementById('list-pending');
-                const rDiv = document.getElementById('list-ready');
-                const sDiv = document.getElementById('list-shipping');
-                const dDiv = document.getElementById('list-done');
+                const divs = {
+                    PENDING: document.getElementById('list-pending'),
+                    PREPARED: document.getElementById('list-prepared'),
+                    READY: document.getElementById('list-ready'),
+                    SHIPPING: document.getElementById('list-shipping'),
+                    DONE: document.getElementById('list-done')
+                };
 
-                pDiv.innerHTML = ''; rDiv.innerHTML = ''; sDiv.innerHTML = ''; dDiv.innerHTML = '';
+                for(let key in divs) divs[key].innerHTML = '';
 
                 orders.forEach(o => {
                     let text = o.content;
                     if(o.phone) text = text.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
 
+                    let actionsHTML = '';
+                    if (o.status === 'PENDING') {
+                        actionsHTML = `<button class="btn-action bg-orange" onclick="chuyenSangDaPha(${o.id})">✅ XONG, ĐỢI GỬI</button>
+                                       <button class="btn-action bg-red" onclick="xoaDon(${o.id})">Hủy đơn</button>`;
+                    } else if (o.status === 'PREPARED') {
+                        actionsHTML = `<b style="color:#059669; font-size:13px;">Gói xong 🛍️</b> <button class="btn-action bg-red" onclick="xoaDon(${o.id})">Hủy</button>`;
+                    } else if (o.status === 'READY') {
+                        actionsHTML = `<b style="color:#d97706; font-size:13px;">⏳ Chờ hốt...</b> <button class="btn-action bg-red" onclick="xoaDon(${o.id})">Hủy</button>`;
+                    } else if (o.status === 'SHIPPING') {
+                        actionsHTML = `<b style="color:blue; font-size:13px;">⚡ ĐANG GIAO</b>`;
+                    } else if (o.status === 'DONE') {
+                        actionsHTML = `<b style="color:green; font-size:13px;">✅ ĐÃ XONG</b>`;
+                    }
+
                     const cardHTML = `
-                        <div class="order-card">
+                        <div class="order-card" ${o.status === 'PREPARED' ? 'style="border-left:4px solid #059669;"' : ''}>
                             <div style="flex: 1;">
                                 <strong>#${o.id}</strong> [${o.createdAt}] - ${text}
-                                ${o.shipperName ? `<br><span class="badge-shipper">👤 Người giao: ${o.shipperName}</span>` : ''}
+                                ${o.shipperName ? `<br><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 11px;">👤 Ship: ${o.shipperName}</span>` : ''}
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 5px;">
-                                ${o.status === 'PENDING' ? `
-                                    <button class="btn-ready" onclick="chuyenDonPhaXong(${o.id})">✅ PHA XONG</button>
-                                    <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy đơn</button>
-                                ` : ''}
-                                ${o.status === 'READY' ? `<b style="color:#d97706; font-size:13px; white-space:nowrap;">⏳ Chờ hốt...</b> <button class="btn-delete" onclick="xoaDon(${o.id})">Hủy</button>` : ''}
-                                ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px; white-space:nowrap;">⚡ ĐANG GIAO</b>` : ''}
-                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px; white-space:nowrap;">✅ ĐÃ XONG</b>` : ''}
+                                ${actionsHTML}
                             </div>
                         </div>`;
 
-                    if(o.status === 'PENDING') pDiv.innerHTML += cardHTML;
-                    else if(o.status === 'READY') rDiv.innerHTML += cardHTML;
-                    else if(o.status === 'SHIPPING') sDiv.innerHTML += cardHTML;
-                    else if(o.status === 'DONE') dDiv.innerHTML += cardHTML;
+                    if (divs[o.status]) divs[o.status].innerHTML += cardHTML;
                 });
 
-                if(!pDiv.innerHTML) pDiv.innerHTML = '<div style="color:gray;font-size:13px;">Bếp đang trống đơn chờ pha chế.</div>';
-                if(!rDiv.innerHTML) rDiv.innerHTML = '<div style="color:gray;font-size:13px;">Không có đơn treo chờ ship.</div>';
+                if(!divs.PENDING.innerHTML) divs.PENDING.innerHTML = '<div style="color:gray;font-size:13px;">Bếp đang rảnh rỗi.</div>';
+                if(!divs.PREPARED.innerHTML) divs.PREPARED.innerHTML = '<div style="color:gray;font-size:13px;">Chưa có đơn nào chờ gom gửi đi.</div>';
             } catch(e){}
         }
 
+        // CÁC HÀM TƯƠNG TỰ NHƯ CŨ (Cap nhat radar, chat...)
         async function capNhatRadarShipper() {
             try {
                 const res = await fetch('/api/shipper/locations');
                 const locations = await res.json();
                 const radarDiv = document.getElementById('shipper-radar-list');
-                
                 const now = Date.now();
                 let hasOnline = false;
                 radarDiv.innerHTML = '';
-
                 for(let name in locations) {
-                    const loc = locations[name];
-                    if (now - loc.timestamp < 120000) {
+                    if (now - locations[name].timestamp < 120000) {
                         hasOnline = true;
-                        radarDiv.innerHTML += `
-                            <div class="shipper-loc-item">
-                                🟢 <strong>${name}</strong> (${loc.updatedAt})
-                                <a href="https://www.google.com/maps/search/?api=1&query=${loc.lat},${loc.lng}" target="_blank" class="btn-map">📍 XEM MAPS</a>
-                            </div>`;
+                        radarDiv.innerHTML += `<div class="shipper-loc-item">🟢 <strong>${name}</strong> (${locations[name].updatedAt})</div>`;
                     }
                 }
-                if(!hasOnline) radarDiv.innerHTML = 'Chưa có shipper nào mở app bật định vị làm việc.';
+                if(!hasOnline) radarDiv.innerHTML = 'Chưa có shipper nào mở app.';
             } catch(e){}
         }
 
@@ -217,7 +295,7 @@
                 if(msgs.length !== lastMsgCount) {
                     const chatDiv = document.getElementById('chatMessages');
                     chatDiv.innerHTML = msgs.map(m => `
-                        <div class="msg ${m.sender === 'BẾP QUÁN' ? 'me' : ''}">
+                        <div class="msg ${m.sender === bepCachedName ? 'me' : ''}">
                             <strong style="color:#0369a1">${m.sender}</strong> <span style="font-size:11px;color:gray">[${m.time}]</span><br>${m.text}
                         </div>
                     `).join('');
@@ -231,22 +309,10 @@
             const input = document.getElementById('chatInput');
             if(!input.value.trim()) return;
             try {
-                await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sender: 'BẾP QUÁN', text: input.value.trim() })
-                });
-                input.value = '';
-                loadChat();
+                await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sender: bepCachedName, text: input.value.trim() }) });
+                input.value = ''; loadChat();
             } catch(e) {}
         }
-
-        setInterval(layDuLieu, 3000);
-        setInterval(capNhatRadarShipper, 4000);
-        setInterval(loadChat, 2000);
-        layDuLieu();
-        capNhatRadarShipper();
-        loadChat();
     </script>
 </body>
 </html>
