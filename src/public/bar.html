@@ -4,64 +4,57 @@
     <meta charset="UTF-8">
     <title>KHANG MIỀN TÂY - Bếp & Điều Phối</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2 family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-global: #f8fafc; --text-main: #0f172a; --primary: #2563eb; --success: #10b981; --warning: #f59e0b; --card-bg: #ffffff; --border: #e2e8f0; }
+        :root { --bg-global: #f8fafc; --text-main: #0f172a; --primary: #2563eb; --success: #10b981; --card-bg: #ffffff; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-global); color: var(--text-main); padding: 25px 15px; }
+        body { background-color: var(--bg-global); color: var(--text-main); padding: 20px 10px; }
         .container { max-width: 1000px; margin: 0 auto; }
-        h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
-        h3 { font-size: 16px; font-weight: 600; margin: 20px 0 12px 0; color: #475569; text-transform: uppercase; }
-        .box-nhap { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 20px; border: 1px solid var(--border); }
-        textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; background: #f8fafc; margin-bottom: 12px; }
-        .btn { padding: 12px 20px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 14px; }
+        h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 15px; }
+        h3 { font-size: 15px; font-weight: 600; margin: 20px 0 10px 0; color: #475569; border-left: 4px solid var(--primary); padding-left: 8px; }
+        
+        .box-nhap { background: var(--card-bg); padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 15px; border: 1px solid var(--border); }
+        textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; margin-bottom: 10px; }
+        .btn { padding: 12px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 14px; }
         .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: #78350f; width: auto; }
+        .btn-excel { background: #1e293b; color: white; margin-top: 10px; }
         
-        .box-gom { background: #eff6ff; padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-        .input-text { flex: 1; min-width: 200px; padding: 10px; border-radius: 6px; border: 1px solid #93c5fd; }
-
-        /* Giao diện Đơn hàng */
-        .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
-        
-        /* BOX ĐỊNH VỊ SHIPPER */
-        .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        /* RADAR GPS */
+        .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
         .shipper-loc-item { display: inline-flex; align-items: center; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid #dcfce7; margin-right: 8px; margin-top: 6px; font-size: 13px; }
-        .btn-map { background: #16a34a; color: white; text-decoration: none; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-size: 11px; font-weight: 600; }
+        .btn-map { background: #16a34a; color: white; text-decoration: none; padding: 3px 8px; border-radius: 4px; margin-left: 8px; font-size: 11px; font-weight: 600; }
 
-        /* KHU VỰC LỊCH SỬ ĐỢT GIAO HÀNG */
-        .history-card { background: #fafafa; border: 1px solid #cbd5e1; padding: 14px; border-radius: 10px; margin-bottom: 12px; }
-        .history-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; color: #475569; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; }
-        .sub-order-item { font-size: 13px; padding: 4px 0; display: flex; justify-content: space-between; }
-        .badge-done { color: var(--success); font-weight: 700; }
-        .badge-shipping { color: var(--primary); font-weight: 500; text-transform: uppercase; font-size: 11px; }
+        /* THẺ ĐƠN HÀNG */
+        .order-list-container { display: flex; flex-direction: column; gap: 8px; }
+        .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
+        .badge-shipper { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+        .btn-delete { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>☕ KHANG MIỀN TÂY - ĐIỀU PHỐI HỆ THỐNG</h2>
+        <h2>☕ KHANG MIỀN TÂY - MÀN HÌNH ĐIỀU PHỐI</h2>
 
         <div class="box-radar">
-            <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER ĐANG ĐI NGOÀI ĐƯỜNG:</strong>
-            <div id="shipper-radar-list" style="margin-top: 5px;">Đang dò tìm tín hiệu GPS của tài xế...</div>
+            <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER ĐANG LÀM VIỆC (24/7):</strong>
+            <div id="shipper-radar-list" style="margin-top: 5px; font-size: 13px; color: gray;">Đang dò tìm sóng GPS từ app shipper...</div>
         </div>
 
         <div class="box-nhap">
-            <textarea id="orderContent" placeholder="Dán nội dung đơn hàng vào đây..."></textarea>
-            <button class="btn btn-success" onclick="taoDonHang()">🚀 THÊM VÀO BẾP PHA CHẾ</button>
+            <textarea id="orderContent" placeholder="Dán hóa đơn, nội dung tin nhắn chốt đơn vào đây..."></textarea>
+            <button class="btn btn-success" onclick="taoDonHang()">🚀 XỬ LÝ & ĐẨY XUỐNG BẾP PHA CHẾ</button>
+            <button class="btn btn-excel" onclick="window.location.href='/api/export-excel'">📥 TẢI FILE EXCEL BÁO CÁO DOANH THU</button>
         </div>
 
-        <div class="box-gom">
-            <input type="text" id="shipperName" class="input-text" placeholder="Nhập tên Shipper chạy chuyến này...">
-            <button class="btn btn-warning" onclick="gomDonTheoDot()">⚡ BẮN CHUYẾN CHO SHIPPER</button>
-        </div>
+        <h3>⏳ 1. ĐƠN CHỜ PHA CHẾ TRONG BẾP / CHỜ SHIP HỐT ĐI:</h3>
+        <div id="list-pending" class="order-list-container"></div>
 
-        <h3>⏳ ĐƠN HÀNG ĐANG CHỜ PHA CHẾ:</h3>
-        <div id="list-orders"></div>
+        <h3>🛵 2. ĐƠN ĐANG TRÊN ĐƯỜNG ĐI GIAO (REAL-TIME):</h3>
+        <div id="list-shipping" class="order-list-container"></div>
 
-        <h3>📜 LỊCH SỬ CÁC ĐỢT GIAO HÀNG TRONG NGÀY:</h3>
-        <div id="list-history-batches"></div>
+        <h3>✅ 3. LỊCH SỬ ĐƠN ĐÃ GIAO THÀNH CÔNG (CÓ DẤU TICK XONG):</h3>
+        <div id="list-done" class="order-list-container"></div>
     </div>
 
     <script>
@@ -76,9 +69,9 @@
             });
             const data = await res.json();
             
-            // XỬ LÝ KHI BỊ TRÙNG ĐƠN
+            // Nếu bị trùng đơn, báo lỗi ngay lập tức
             if(!res.ok && data.isDuplicate) {
-                alert(data.error); // Hiện thông báo trùng đơn ngay lập tức
+                alert(data.error); 
                 return;
             }
 
@@ -87,64 +80,51 @@
         }
 
         async function layDuLieu() {
-            // Lấy danh sách ID đang tích chọn để không bị mất tick khi reload
-            const checkedIds = Array.from(document.querySelectorAll('input[name="orderSelect"]:checked')).map(cb => cb.value);
+            try {
+                const res = await fetch('/api/orders');
+                const orders = await res.json();
 
-            const resOrders = await fetch('/api/orders');
-            const orders = await resOrders.json();
-            const resBatches = await fetch('/api/batches');
-            const batches = await resBatches.json();
+                const pDiv = document.getElementById('list-pending');
+                const sDiv = document.getElementById('list-shipping');
+                const dDiv = document.getElementById('list-done');
 
-            // 1. Vẽ đơn chờ pha chế
-            const listDiv = document.getElementById('list-orders');
-            listDiv.innerHTML = '';
-            const pendings = orders.filter(o => o.status === 'PENDING');
-            
-            if(pendings.length === 0) listDiv.innerHTML = '<div style="color:gray; padding:10px;">Hết đơn chờ.</div>';
-            
-            pendings.forEach(o => {
-                let text = o.content;
-                if(o.phone) text = text.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
-                const isChecked = checkedIds.includes(String(o.id)) ? 'checked' : '';
+                pDiv.innerHTML = ''; sDiv.innerHTML = ''; dDiv.innerHTML = '';
 
-                listDiv.innerHTML += `
-                    <div class="order-card">
-                        <label style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" name="orderSelect" value="${o.id}" ${isChecked}>
-                            <span><strong>#${o.id}</strong> [${o.createdAt}] - ${text}</span>
-                        </label>
-                    </div>`;
-            });
+                orders.forEach(o => {
+                    let text = o.content;
+                    if(o.phone) text = text.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
 
-            // 2. Vẽ Lịch sử các đợt giao hàng
-            const historyDiv = document.getElementById('list-history-batches');
-            historyDiv.innerHTML = '';
-            
-            if(batches.length === 0) historyDiv.innerHTML = '<div style="color:gray; padding:10px;">Chưa gửi đợt nào đi.</div>';
-            
-            // Đảo ngược để đợt mới nhất nằm lên đầu
-            [...batches].reverse().forEach(b => {
-                let subOrdersHTML = '';
-                b.orderIds.forEach(id => {
-                    const ord = orders.find(o => o.id === id);
-                    if(ord) {
-                        const statusText = ord.status === 'DONE' ? '<span class="badge-done">✅ Đã giao xong</span>' : '<span class="badge-shipping">🛵 Đang đi giao</span>';
-                        subOrdersHTML += `<div class="sub-order-item"><span>📦 Đơn #${ord.id}: ${ord.content}</span> ${statusText}</div>`;
-                    }
+                    const cardHTML = `
+                        <div class="order-card">
+                            <div>
+                                <strong>#${o.id}</strong> [${o.createdAt}] - ${text}
+                                ${o.shipperName ? `<br><span class="badge-shipper">👤 Người giao: ${o.shipperName}</span>` : ''}
+                            </div>
+                            <div>
+                                ${o.status === 'PENDING' ? `<button class="btn-delete" onclick="xoaDon(${o.id})">Hủy đơn</button>` : ''}
+                                ${o.status === 'SHIPPING' ? `<b style="color:blue; font-size:13px;">⚡ ĐANG GIAO...</b>` : ''}
+                                ${o.status === 'DONE' ? `<b style="color:green; font-size:13px;">✅ ĐÃ GIAO XONG ✓</b>` : ''}
+                            </div>
+                        </div>`;
+
+                    if(o.status === 'PENDING') pDiv.innerHTML += cardHTML;
+                    else if(o.status === 'SHIPPING') sDiv.innerHTML += cardHTML;
+                    else if(o.status === 'DONE') dDiv.innerHTML += cardHTML;
                 });
 
-                historyDiv.innerHTML += `
-                    <div class="history-card">
-                        <div class="history-header">
-                            <span>📦 ĐỢT #${b.id} - Tài xế: ${b.shipperName} (${b.createdAt})</span>
-                            <span style="color:${b.status==='DONE'?'green':'blue'}">${b.status==='DONE'?'HOÀN THÀNH CHUYẾN':'ĐANG CHẠY'}</span>
-                        </div>
-                        <div>${subOrdersHTML}</div>
-                    </div>`;
-            });
+                if(!pDiv.innerHTML) pDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Hiện tại quán đang trống đơn chờ pha chế.</div>';
+                if(!sDiv.innerHTML) sDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Chưa có shipper nào đi ngoài đường.</div>';
+                if(!dDiv.innerHTML) dDiv.innerHTML = '<div style="color:gray;font-size:13px;padding:5px;">Chưa có đơn hoàn thành.</div>';
+            } catch(e){}
         }
 
-        // LẤY TỌA ĐỘ GPS CỦA SHIPPER HIỂN THỊ LÊN RADAR
+        async function xoaDon(id) {
+            if(confirm('Ông có chắc muốn hủy bỏ đơn hàng này không?')) {
+                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
+                layDuLieu();
+            }
+        }
+
         async function capNhatRadarShipper() {
             try {
                 const res = await fetch('/api/shipper/locations');
@@ -152,43 +132,25 @@
                 const radarDiv = document.getElementById('shipper-radar-list');
                 
                 if(Object.keys(locations).length === 0) {
-                    radarDiv.innerHTML = 'Chưa có shipper nào bật định vị.';
+                    radarDiv.innerHTML = 'Hiện chưa có shipper nào mở app đăng nhập ca làm.';
                     return;
                 }
                 
                 radarDiv.innerHTML = '';
                 for(let name in locations) {
                     const loc = locations[name];
-                    // Link ma thuật mở thẳng Google Maps định vị tọa độ không mất tiền mua API
                     const googleMapsUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
-                    
                     radarDiv.innerHTML += `
                         <div class="shipper-loc-item">
-                            👤 <strong>${name}</strong>: Đang di chuyển (Cập nhật: ${loc.updatedAt})
-                            <a href="${googleMapsUrl}" target="_blank" class="btn-map">📍 XEM VỊ TRÍ</a>
+                            🟢 <strong>${name}</strong> (Cập nhật: ${loc.updatedAt})
+                            <a href="${googleMapsUrl}" target="_blank" class="btn-map">📍 XEM VỊ TRÍ TRÊN MAPS</a>
                         </div>`;
                 }
             } catch(e){}
         }
 
-        async function gomDonTheoDot() {
-            const shipperName = document.getElementById('shipperName').value;
-            const checkboxes = document.querySelectorAll('input[name="orderSelect"]:checked');
-            const orderIds = Array.from(checkboxes).map(cb => cb.value);
-
-            if(!shipperName.trim() || orderIds.length === 0) return alert('Điền tên tài xế và tích chọn đơn ông ơi!');
-
-            await fetch('/api/batches', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderIds, shipperName })
-            });
-            document.getElementById('shipperName').value = '';
-            layDuLieu();
-        }
-
-        setInterval(layDuLieu, 4000);
-        setInterval(capNhatRadarShipper, 5000);
+        setInterval(layDuLieu, 3000);
+        setInterval(capNhatRadarShipper, 4000);
         layDuLieu();
         capNhatRadarShipper();
     </script>
