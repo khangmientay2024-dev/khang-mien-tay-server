@@ -2,143 +2,173 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>KHANG MIỀN TÂY - Điều Phối & Pha Chế</title>
+    <title>KHANG MIỀN TÂY - Bếp & Điều Phối</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2 family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-global: #f8fafc;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --success: #10b981;
-            --success-hover: #059669;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --danger-hover: #dc2626;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-        }
-
+        :root { --bg-global: #f8fafc; --text-main: #0f172a; --primary: #2563eb; --success: #10b981; --warning: #f59e0b; --card-bg: #ffffff; --border: #e2e8f0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-global); color: var(--text-main); padding: 30px 15px; }
+        body { background-color: var(--bg-global); color: var(--text-main); padding: 25px 15px; }
         .container { max-width: 1000px; margin: 0 auto; }
-        
-        h2 { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
-        h3 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #334155; }
-
-        /* Khung nhập liệu VIP */
-        .box-nhap { background: var(--card-bg); padding: 24px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); margin-bottom: 24px; border: 1px solid var(--border); }
-        .label-input { font-weight: 600; font-size: 14px; color: #475569; display: block; margin-bottom: 10px; }
-        textarea { width: 100%; padding: 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; resize: vertical; min-height: 90px; transition: all 0.2s; background: #f8fafc; }
-        textarea:focus { outline: none; border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-        
-        /* Nút bấm Modern */
-        .btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 600; padding: 12px 20px; font-size: 15px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; width: 100%; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        h2 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+        h3 { font-size: 16px; font-weight: 600; margin: 20px 0 12px 0; color: #475569; text-transform: uppercase; }
+        .box-nhap { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 20px; border: 1px solid var(--border); }
+        textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; min-height: 80px; background: #f8fafc; margin-bottom: 12px; }
+        .btn { padding: 12px 20px; font-weight: 600; border-radius: 8px; border: none; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 14px; }
         .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: var(--success-hover); transform: translateY(-1px); }
-        .btn-warning { background: var(--warning); color: #78350f; width: auto; padding: 10px 20px; font-size: 14px; }
-        .btn-warning:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-sua { background: #f1f5f9; color: #334155; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; }
-        .btn-sua:hover { background: #e2e8f0; }
-        .btn-xoa { background: #fee2e2; color: var(--danger); padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; }
-        .btn-xoa:hover { background: #fca5a5; color: #7f1d1d; }
-
-        /* Khung gom đơn */
-        .box-gom { background: #eff6ff; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #bfdbfe; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; }
-        .box-gom h3 { margin-bottom: 0; width: 100%; font-size: 15px; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; }
-        .input-text { flex: 1; min-width: 250px; padding: 10px 14px; border-radius: 8px; border: 1px solid #93c5fd; font-size: 14px; }
-        .input-text:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-
-        /* Danh sách đơn hàng dạng Card cao cấp */
-        .order-list-container { display: flex; flex-direction: column; gap: 12px; }
-        .order-card { background: var(--card-bg); border: 1px solid var(--border); padding: 16px 20px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); transition: all 0.2s; }
-        .order-card:hover { border-color: #cbd5e1; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        .btn-warning { background: var(--warning); color: #78350f; width: auto; }
         
-        .order-left { display: flex; align-items: center; gap: 16px; }
-        .custom-checkbox { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
-        .order-info strong { color: #1e293b; font-size: 14px; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
-        .order-text { font-size: 15px; color: #334155; line-height: 1.5; }
-        
-        .order-actions { display: flex; gap: 8px; align-items: center; }
+        .box-gom { background: #eff6ff; padding: 16px; border-radius: 12px; border: 1px solid #bfdbfe; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .input-text { flex: 1; min-width: 200px; padding: 10px; border-radius: 6px; border: 1px solid #93c5fd; }
 
-        /* Highlight SĐT tinh tế, không bị chóe */
-        .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; border: 1px solid #fde68a; font-size: 14px; margin: 0 4px; }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); font-size: 15px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; }
+        /* Giao diện Đơn hàng */
+        .order-card { background: white; border: 1px solid var(--border); padding: 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .phone-highlight { background: #fef3c7; padding: 2px 6px; border-radius: 4px; font-weight: 600; color: #b45309; }
+        
+        /* BOX ĐỊNH VỊ SHIPPER */
+        .box-radar { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .shipper-loc-item { display: inline-flex; align-items: center; background: white; padding: 6px 12px; border-radius: 6px; border: 1px solid #dcfce7; margin-right: 8px; margin-top: 6px; font-size: 13px; }
+        .btn-map { background: #16a34a; color: white; text-decoration: none; padding: 2px 6px; border-radius: 4px; margin-left: 8px; font-size: 11px; font-weight: 600; }
+
+        /* KHU VỰC LỊCH SỬ ĐỢT GIAO HÀNG */
+        .history-card { background: #fafafa; border: 1px solid #cbd5e1; padding: 14px; border-radius: 10px; margin-bottom: 12px; }
+        .history-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; color: #475569; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 8px; }
+        .sub-order-item { font-size: 13px; padding: 4px 0; display: flex; justify-content: space-between; }
+        .badge-done { color: var(--success); font-weight: 700; }
+        .badge-shipping { color: var(--primary); font-weight: 500; text-transform: uppercase; font-size: 11px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>☕ QUẦY ĐIỀU PHỐI & PHA CHẾ <span style="color: var(--primary); font-size: 14px; background: #dbeafe; padding: 4px 10px; border-radius: 99px;">KHANG MIỀN TÂY</span></h2>
+        <h2>☕ KHANG MIỀN TÂY - ĐIỀU PHỐI HỆ THỐNG</h2>
+
+        <div class="box-radar">
+            <strong style="color: #166534; font-size: 14px;">📍 RADAR ĐỊNH VỊ SHIPPER ĐANG ĐI NGOÀI ĐƯỜNG:</strong>
+            <div id="shipper-radar-list" style="margin-top: 5px;">Đang dò tìm tín hiệu GPS của tài xế...</div>
+        </div>
 
         <div class="box-nhap">
-            <label class="label-input">📝 DÁN NỘI DUNG ĐƠN HÀNG (Hỗ trợ chuỗi gộp tự do):</label>
-            <textarea id="orderContent" placeholder="Ví dụ: 1 matcha latte xl, b3, 0945224444..."></textarea>
-            <button class="btn btn-success" onclick="taoDonHang()">🚀 THÊM VÀO HÀNG ĐỢI PHA CHẾ</button>
+            <textarea id="orderContent" placeholder="Dán nội dung đơn hàng vào đây..."></textarea>
+            <button class="btn btn-success" onclick="taoDonHang()">🚀 THÊM VÀO BẾP PHA CHẾ</button>
         </div>
 
         <div class="box-gom">
-            <h3>🏃‍♂️ Gom đợt giao hàng cho Shipper</h3>
-            <input type="text" id="shipperName" class="input-text" placeholder="Tên tài xế phụ trách chạy đợt này...">
-            <button class="btn btn-warning" onclick="gomDonTheoDot()">⚡ BẮN ĐỢT CHO SHIPPER</button>
+            <input type="text" id="shipperName" class="input-text" placeholder="Nhập tên Shipper chạy chuyến này...">
+            <button class="btn btn-warning" onclick="gomDonTheoDot()">⚡ BẮN CHUYẾN CHO SHIPPER</button>
         </div>
 
-        <h3>⏳ Các đơn hàng đang chờ pha chế:</h3>
-        <div id="list-orders" class="order-list-container"></div>
+        <h3>⏳ ĐƠN HÀNG ĐANG CHỜ PHA CHẾ:</h3>
+        <div id="list-orders"></div>
+
+        <h3>📜 LỊCH SỬ CÁC ĐỢT GIAO HÀNG TRONG NGÀY:</h3>
+        <div id="list-history-batches"></div>
     </div>
 
     <script>
         async function taoDonHang() {
             const content = document.getElementById('orderContent').value;
-            if(!content.trim()) return alert('Chưa dán nội dung đơn hàng ông ơi!');
+            if(!content.trim()) return;
 
-            await fetch('/api/orders', {
+            const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ content })
             });
-
-            document.getElementById('orderContent').value = '';
-            layDonHang();
-        }
-
-        async function layDonHang() {
-            const res = await fetch('/api/orders');
-            const orders = await res.json();
-            const listDiv = document.getElementById('list-orders');
-            listDiv.innerHTML = '';
-
-            const pendings = orders.filter(o => o.status === 'PENDING');
-            if(pendings.length === 0) {
-                listDiv.innerHTML = '<div class="empty-state">🎉 Sạch đơn! Không còn đơn nào chờ pha chế.</div>';
+            const data = await res.json();
+            
+            // XỬ LÝ KHI BỊ TRÙNG ĐƠN
+            if(!res.ok && data.isDuplicate) {
+                alert(data.error); // Hiện thông báo trùng đơn ngay lập tức
                 return;
             }
 
+            document.getElementById('orderContent').value = '';
+            layDuLieu();
+        }
+
+        async function layDuLieu() {
+            // Lấy danh sách ID đang tích chọn để không bị mất tick khi reload
+            const checkedIds = Array.from(document.querySelectorAll('input[name="orderSelect"]:checked')).map(cb => cb.value);
+
+            const resOrders = await fetch('/api/orders');
+            const orders = await resOrders.json();
+            const resBatches = await fetch('/api/batches');
+            const batches = await resBatches.json();
+
+            // 1. Vẽ đơn chờ pha chế
+            const listDiv = document.getElementById('list-orders');
+            listDiv.innerHTML = '';
+            const pendings = orders.filter(o => o.status === 'PENDING');
+            
+            if(pendings.length === 0) listDiv.innerHTML = '<div style="color:gray; padding:10px;">Hết đơn chờ.</div>';
+            
             pendings.forEach(o => {
-                let textHienThi = o.content;
-                if(o.phone) {
-                    textHienThi = textHienThi.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
-                }
+                let text = o.content;
+                if(o.phone) text = text.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
+                const isChecked = checkedIds.includes(String(o.id)) ? 'checked' : '';
 
                 listDiv.innerHTML += `
                     <div class="order-card">
-                        <div class="order-left">
-                            <input type="checkbox" name="orderSelect" value="${o.id}" class="custom-checkbox">
-                            <div class="order-info">
-                                <strong>Đơn #${o.id}</strong> <span class="order-text">${textHienThi}</span>
-                            </div>
-                        </div>
-                        <div class="order-actions">
-                            <button class="btn-sua" onclick="suaDon(${o.id}, '${o.content}')">✏️ Sửa</button>
-                            <button class="btn-xoa" onclick="xoaDon(${o.id})">❌ Hủy</button>
-                        </div>
-                    </div>
-                `;
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" name="orderSelect" value="${o.id}" ${isChecked}>
+                            <span><strong>#${o.id}</strong> [${o.createdAt}] - ${text}</span>
+                        </label>
+                    </div>`;
             });
+
+            // 2. Vẽ Lịch sử các đợt giao hàng
+            const historyDiv = document.getElementById('list-history-batches');
+            historyDiv.innerHTML = '';
+            
+            if(batches.length === 0) historyDiv.innerHTML = '<div style="color:gray; padding:10px;">Chưa gửi đợt nào đi.</div>';
+            
+            // Đảo ngược để đợt mới nhất nằm lên đầu
+            [...batches].reverse().forEach(b => {
+                let subOrdersHTML = '';
+                b.orderIds.forEach(id => {
+                    const ord = orders.find(o => o.id === id);
+                    if(ord) {
+                        const statusText = ord.status === 'DONE' ? '<span class="badge-done">✅ Đã giao xong</span>' : '<span class="badge-shipping">🛵 Đang đi giao</span>';
+                        subOrdersHTML += `<div class="sub-order-item"><span>📦 Đơn #${ord.id}: ${ord.content}</span> ${statusText}</div>`;
+                    }
+                });
+
+                historyDiv.innerHTML += `
+                    <div class="history-card">
+                        <div class="history-header">
+                            <span>📦 ĐỢT #${b.id} - Tài xế: ${b.shipperName} (${b.createdAt})</span>
+                            <span style="color:${b.status==='DONE'?'green':'blue'}">${b.status==='DONE'?'HOÀN THÀNH CHUYẾN':'ĐANG CHẠY'}</span>
+                        </div>
+                        <div>${subOrdersHTML}</div>
+                    </div>`;
+            });
+        }
+
+        // LẤY TỌA ĐỘ GPS CỦA SHIPPER HIỂN THỊ LÊN RADAR
+        async function capNhatRadarShipper() {
+            try {
+                const res = await fetch('/api/shipper/locations');
+                const locations = await res.json();
+                const radarDiv = document.getElementById('shipper-radar-list');
+                
+                if(Object.keys(locations).length === 0) {
+                    radarDiv.innerHTML = 'Chưa có shipper nào bật định vị.';
+                    return;
+                }
+                
+                radarDiv.innerHTML = '';
+                for(let name in locations) {
+                    const loc = locations[name];
+                    // Link ma thuật mở thẳng Google Maps định vị tọa độ không mất tiền mua API
+                    const googleMapsUrl = `https://www.google.com/maps?q=${loc.lat},${loc.lng}`;
+                    
+                    radarDiv.innerHTML += `
+                        <div class="shipper-loc-item">
+                            👤 <strong>${name}</strong>: Đang di chuyển (Cập nhật: ${loc.updatedAt})
+                            <a href="${googleMapsUrl}" target="_blank" class="btn-map">📍 XEM VỊ TRÍ</a>
+                        </div>`;
+                }
+            } catch(e){}
         }
 
         async function gomDonTheoDot() {
@@ -146,42 +176,21 @@
             const checkboxes = document.querySelectorAll('input[name="orderSelect"]:checked');
             const orderIds = Array.from(checkboxes).map(cb => cb.value);
 
-            if(orderIds.length === 0) return alert('Tích chọn đơn lẻ ở danh sách phía dưới để gom đợt đi ông!');
+            if(!shipperName.trim() || orderIds.length === 0) return alert('Điền tên tài xế và tích chọn đơn ông ơi!');
 
-            const res = await fetch('/api/batches', {
+            await fetch('/api/batches', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderIds, shipperName })
             });
-            const data = await res.json();
-            if(data.success) {
-                alert(`Đã bắn thành công Đợt giao #${data.batch.id} cho Shipper!`);
-                document.getElementById('shipperName').value = '';
-                layDonHang();
-            }
+            document.getElementById('shipperName').value = '';
+            layDuLieu();
         }
 
-        async function suaDon(id, oldContent) {
-            const content = prompt("Sửa lại thông tin đơn hàng gộp:", oldContent);
-            if (content === null || !content.trim()) return;
-
-            await fetch(`/api/orders/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
-            layDonHang();
-        }
-
-        async function xoaDon(id) {
-            if(confirm(`Xác nhận HỦY hẳn đơn #${id}?`)) {
-                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-                layDonHang();
-            }
-        }
-
-        layDonHang();
-        setInterval(layDonHang, 5000);
+        setInterval(layDuLieu, 4000);
+        setInterval(capNhatRadarShipper, 5000);
+        layDuLieu();
+        capNhatRadarShipper();
     </script>
 </body>
 </html>

@@ -2,126 +2,72 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>KHANG MIỀN TÂY - Đội Ngũ Shipper</title>
+    <title>KHANG MIỀN TÂY - Ứng Dụng Shipper</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --bg-global: #f1f5f9;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --primary: #4f46e5;
-            --success: #10b981;
-            --card-bg: #ffffff;
-            --border: #e2e8f0;
-        }
-
+        :root { --bg-global: #f1f5f9; --text-main: #1e293b; --primary: #4f46e5; --success: #10b981; --card-bg: #ffffff; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background-color: var(--bg-global); color: var(--text-main); padding: 15px 10px; }
         .container { max-width: 600px; margin: 0 auto; }
+        h2 { font-size: 18px; font-weight: 700; margin-bottom: 15px; }
+        h3 { font-size: 14px; font-weight: 600; color: #475569; margin: 15px 0 8px 0; text-transform: uppercase; }
         
-        h2 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 10px 0 20px 0; display: flex; align-items: center; gap: 8px; }
-        h3 { font-size: 15px; font-weight: 600; color: #475569; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        /* ĐƠN ĐANG PHA CHẾ BẾP */
+        .box-waiting-kitchen { background: #fff7ed; border: 1px solid #ffedd5; padding: 12px; border-radius: 10px; margin-bottom: 15px; }
+        .kitchen-item { font-size: 13px; color: #c2410c; padding: 4px 0; border-bottom: 1px dashed #fed7aa; }
 
-        /* Khung shipper lên đơn nhanh */
-        .box-nhap { background: var(--card-bg); padding: 16px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); margin-bottom: 16px; border-top: 4px solid #f59e0b; }
-        textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #f8fafc; resize: none; }
-        textarea:focus { outline: none; border-color: #f59e0b; background: white; }
+        .batch-card { background: var(--card-bg); padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .batch-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; margin-bottom: 10px; }
+        .order-li { background: #f8fafc; padding: 10px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .phone-call-link { font-weight: 600; color: white; background: #dc2626; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 12px; display: inline-block; margin-top: 4px; }
+        .btn-tick { background: var(--success); color: white; border: none; padding: 6px 12px; font-weight: 600; border-radius: 6px; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; border: none; width: 100%; padding: 10px; font-weight: 600; border-radius: 8px; cursor: pointer; }
         
-        /* Bộ nút bấm Mobile */
-        .btn-full { width: 100%; padding: 12px; border: none; font-weight: 600; font-size: 14px; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; margin-top: 8px; }
-        .btn-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-        .btn-amber:hover { background: #fef3c7; }
-        .btn-secondary { background: #ffffff; color: #475569; border: 1px solid #cbd5e1; font-size: 13px; padding: 10px; }
-        .btn-excel { background: #0f766e; color: white; box-shadow: 0 2px 4px rgb(0 0 0 / 0.1); margin-top: 25px; }
-
-        /* Chuyến hàng - Thiết kế dạng thẻ bo tròn mượt */
-        .batch-card { background: var(--card-bg); border: 1px solid var(--border); padding: 16px; margin-bottom: 16px; border-radius: 12px; box-shadow: 0 2px 4px rgb(0 0 0 / 0.02); }
-        .batch-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
-        .batch-title { font-size: 14px; font-weight: 700; color: #1e3a8a; }
-        
-        /* Badge Trạng thái */
-        .badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; }
-        .badge-ready { background: #fef3c7; color: #d97706; }
-        .badge-delivering { background: #dbeafe; color: #2563eb; }
-
-        .shipper-name { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
-
-        /* Từng đơn nhỏ nằm bên trong đợt chạy */
-        ul { list-style: none; }
-        .order-li { background: #f8fafc; padding: 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #edf2f7; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .order-done { background: #f1f5f9; color: #94a3b8; text-decoration: line-through; border-left: 4px solid #cbd5e1; }
-        .order-done .phone-call-link { display: none; } /* Ẩn nút gọi khi đã xong */
-
-        .order-content-text { font-size: 14px; color: #334155; line-height: 1.4; }
-
-        /* Nút Gọi Điện sang xịn mịn dành cho Shipper bấm khi đi xe */
-        .phone-call-link { font-weight: 600; font-size: 13px; color: #ffffff; text-decoration: none; background: #dc2626; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2); }
-        .phone-call-link:hover { background: #b91c1c; }
-        
-        /* Nút hoàn thành đơn lẻ */
-        .btn-tick-le { background: var(--success); color: white; border: none; padding: 8px 14px; font-weight: 600; cursor: pointer; border-radius: 6px; font-size: 13px; flex-shrink: 0; transition: background 0.2s; }
-        .btn-tick-le:hover { background: #059669; }
-        .txt-done { color: var(--success); font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 2px; }
-
-        /* Nút Bấm Nhận Toàn Bộ Chuyến */
-        .btn-nhanchuyen { background: var(--primary); color: white; width: 100%; padding: 12px; font-weight: 600; border: none; cursor: pointer; border-radius: 8px; font-size: 14px; margin-top: 8px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
-        .btn-nhanchuyen:hover { background: #4338ca; }
-        
-        .hint-text { text-align: center; color: #2563eb; font-size: 12px; font-weight: 600; margin-top: 10px; background: #eff6ff; padding: 8px; border-radius: 6px; }
-        .empty-state { text-align: center; padding: 30px; color: var(--text-muted); font-size: 14px; background: white; border-radius: 12px; }
+        /* THANH ĐỊNH VỊ */
+        .gps-status { background: #e0f2fe; color: #0369a1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 600; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🚀 ĐỘI NGŨ SHIPPER <span style="color: #4f46e5; font-size: 12px; background: #e0e7ff; padding: 2px 8px; border-radius: 99px;">KHANG MIỀN TÂY</span></h2>
+        <h2>🚀 ĐỘI NGŨ SHIPPER - KHANG MIỀN TÂY</h2>
+        
+        <div id="gps-ui" class="gps-status">📡 Đang kích hoạt định vị vệ tinh GPS toàn thời gian...</div>
 
-        <div class="box-nhap">
-            <h3 style="color: #b45309;">🤝 Shipper hỗ trợ lên đơn nhanh</h3>
-            <textarea id="orderContent" placeholder="Dán văn bản text thô của khách vào đây..." rows="2"></textarea>
-            <button class="btn-full btn-amber" onclick="taoDonHang()">🚀 Đẩy đơn thô vào bếp</button>
+        <div class="box-waiting-kitchen">
+            <strong>⏳ ĐƠN QUÁN ĐANG PHA CHẾ (Chờ gom chuyến):</strong>
+            <div id="kitchen-orders-list" style="margin-top: 5px;">Đang tải dữ liệu từ quầy nước...</div>
         </div>
 
-        <button class="btn-full btn-secondary" onclick="layDanhSachDot()">🔄 Tải lại chuyến đi</button>
-        
-        <h3 style="margin-top: 20px;">🚨 Các chuyến hàng cần chạy:</h3>
+        <h3>🚨 CHUYẾN HÀNG CỦA BẠN:</h3>
         <div id="list-batches"></div>
-
-        <button class="btn-full btn-excel" onclick="xuatExcel()">📊 XUẤT BÁO CÁO DOANH THU EXCEL</button>
     </div>
 
     <script>
-        async function taoDonHang() {
-            const content = document.getElementById('orderContent').value;
-            if(!content.trim()) return alert('Có chữ đâu mà nhập ông ơi!');
+        let tenShipperCuaToi = "";
 
-            const res = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert('Đã đẩy đơn thô sang quầy pha chế thành công!');
-                document.getElementById('orderContent').value = '';
-            }
-        }
-
-        async function layDanhSachDot() {
+        async function layDanhSach() {
             const resBatch = await fetch('/api/batches');
             const batches = await resBatch.json();
             const resOrder = await fetch('/api/orders');
             const orders = await resOrder.json();
 
+            // 1. Hiển thị đơn đang chờ pha chế tại quán cho shipper coi
+            const kitchenDiv = document.getElementById('kitchen-orders-list');
+            const pendings = orders.filter(o => o.status === 'PENDING');
+            if(pendings.length === 0) {
+                kitchenDiv.innerHTML = '🎉 Bếp đang trống đơn, có thể chạy về lấy ngay!';
+            } else {
+                kitchenDiv.innerHTML = pendings.map(o => `<div class="kitchen-item">⏱️ Đơn #${o.id} [${o.createdAt}] - ${o.content}</div>`).join('');
+            }
+
+            // 2. Hiển thị đợt giao hàng cần đi chạy
             const listDiv = document.getElementById('list-batches');
             listDiv.innerHTML = '';
-
             const activeBatches = batches.filter(b => b.status !== 'DONE');
+
             if(activeBatches.length === 0) {
-                listDiv.innerHTML = '<div class="empty-state">☕ Bếp chưa gom đợt nào mới. Ngồi uống trà đá xíu đi ông!</div>';
+                listDiv.innerHTML = '<div style="color:gray; padding:20px; text-align:center;">Chưa có chuyến mới gom cho bạn.</div>';
                 return;
             }
 
@@ -133,73 +79,82 @@
                     const ord = orders.find(o => o.id === id);
                     if(ord) {
                         const isSingleDone = ord.status === 'DONE';
+                        let callBtn = ord.phone ? `<br><a href="tel:${ord.phone}" class="phone-call-link">📞 GỌI KHÁCH</a>` : '';
                         
-                        let contentText = ord.content;
-                        if(ord.phone) {
-                            contentText = contentText.replace(ord.phone, `<br><a href="tel:${ord.phone}" class="phone-call-link">📞 GỌI KHÁCH: ${ord.phone}</a>`);
-                        }
-
                         listOrdersHTML += `
-                            <li class="order-li ${isSingleDone ? 'order-done' : ''}">
-                                <div class="order-content-text">
-                                    📦 <strong>Đơn #${ord.id}:</strong> ${contentText}
-                                </div>
-                                ${(!isSingleDone && isDelivering)
-                                    ? `<button class="btn-tick-le" onclick="tickGiaoThanhCongLe(${ord.id})">Giao Xong</button>`
-                                    : (isSingleDone ? '<span class="txt-done">✓ Xong</span>' : '')
-                                }
-                            </li>`;
+                            <div class="order-li" style="${isSingleDone ? 'opacity:0.4; background:#e2e8f0;' : ''}">
+                                <div>📦 <strong>Đơn #${ord.id}:</strong> ${ord.content} ${isSingleDone ? '' : callBtn}</div>
+                                ${(!isSingleDone && isDelivering) 
+                                    ? `<button class="btn-tick" onclick="giaoXongLe(${ord.id})">Xong</button>` 
+                                    : (isSingleDone ? '<b style="color:green">✓ Đã giao</b>' : '')}
+                            </div>`;
                     }
                 });
 
                 listDiv.innerHTML += `
                     <div class="batch-card">
                         <div class="batch-header">
-                            <span class="batch-title">📦 ĐỢT CHẠY #${b.id}</span>
-                            <span class="badge ${isDelivering ? 'badge-delivering' : 'badge-ready'}">
-                                ${isDelivering ? 'Đang giao' : 'Chờ nhận chuyến'}
-                            </span>
+                            <span style="color:#1e3a8a">📦 ĐỢT CHẠY #${b.id}</span>
+                            <span style="color:${isDelivering?'blue':'orange'}">${isDelivering?'Đang giao':'Chờ nhận'}</span>
                         </div>
-                        <div class="shipper-name">👤 Tài xế: <strong>${b.shipperName}</strong></div>
-                        <ul>${listOrdersHTML}</ul>
-                        
+                        <div style="font-size:12px; margin-bottom:10px;">👤 Tài xế phụ trách: <b>${b.shipperName}</b></div>
+                        <div>${listOrdersHTML}</div>
                         ${!isDelivering 
-                            ? `<button class="btn-nhanchuyen" onclick="capNhatTrangThaiDot(${b.id}, 'DELIVERING')">🛵 BẤM NHẬN CHẠY CHUYẾN NÀY</button>`
-                            : `<div class="hint-text">👉 Bấm nút "Giao Xong" ở từng đơn khi giao xong!</div>`
-                        }
-                    </div>
-                `;
+                            ? `<button class="btn-primary" onclick="nhanChuyenDiGiao(${b.id}, '${b.shipperName}')">🛵 BẤM NHẬN CHẠY ĐỢT NÀY</button>` 
+                            : ''}
+                    </div>`;
             });
         }
 
-        async function tickGiaoThanhCongLe(orderId) {
-            if(confirm(`Xác nhận đã giao thành công đơn hàng lẻ này?`)) {
+        async function nhanChuyenDiGiao(batchId, name) {
+            // Lưu lại tên tài xế để kích hoạt GPS định vị
+            if(!tenShipperCuaToi) {
+                tenShipperCuaToi = name;
+                kichHoatDinhViToaDo();
+            }
+            await fetch(`/api/batches/${batchId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'DELIVERING' })
+            });
+            layDanhSach();
+        }
+
+        async function giaoXongLe(orderId) {
+            if(confirm('Xác nhận đã giao thành công và thu tiền đơn này?')) {
                 await fetch(`/api/orders/${orderId}/status`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: 'DONE' })
                 });
-                layDanhSachDot();
+                layDanhSach();
             }
         }
 
-        async function capNhatTrangThaiDot(id, status) {
-            await fetch(`/api/batches/${id}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            layDanhSachDot();
+        // TÍNH NĂNG 4: TỰ ĐỘNG CHẠY NGẦM BẮN TỌA ĐỘ GPS VỀ QUÁN CHO BẾP THEO DÕI
+        function kichHoatDinhViToaDo() {
+            if (navigator.geolocation) {
+                // watchPosition giúp cập nhật liên tục mỗi khi shipper dịch chuyển ngoài đường
+                navigator.geolocation.watchPosition(async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    document.getElementById('gps-ui').innerHTML = `🟢 GPS ĐANG BẬT - Đang chia sẻ vị trí của [${tenShipperCuaToi}] về quán...`;
+                    
+                    // Gửi tọa độ lên máy chủ
+                    await fetch('/api/shipper/location', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ shipperName: tenShipperCuaToi, lat, lng })
+                    });
+                }, (error) => {
+                    document.getElementById('gps-ui').innerHTML = `🔴 LỖI GPS: Hãy cho phép trình duyệt truy cập định vị Vị trí (Location)!`;
+                }, { enableHighAccuracy: true });
+            }
         }
 
-        async function xuatExcel() {
-            const res = await fetch('/api/export-excel', { method: 'POST' });
-            const data = await res.json();
-            if(data.success) alert('Đã tạo thành công file Excel doanh thu!');
-        }
-
-        layDanhSachDot();
-        setInterval(layDanhSachDot, 7000);
+        setInterval(layDanhSach, 5000);
+        layDanhSach();
     </script>
 </body>
 </html>

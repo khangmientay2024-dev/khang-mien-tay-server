@@ -11,30 +11,39 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let orders = [];
 let batches = [];
+let shipperLocations = {}; // Lưu vị trí GPS của các shipper: { 'Tên Shipper': { lat, lng, updatedAt } }
 let orderIdCounter = 1;
 let batchIdCounter = 1;
 
-// 1. API LẤY DANH SÁCH ĐƠN HÀNG LẺ
-app.get('/api/orders', (req, res) => {
-    res.json(orders);
-});
+app.get('/api/orders', (req, res) => res.json(orders));
+app.get('/api/batches', (req, res) => res.json(batches));
 
-// 2. API LẤY DANH SÁCH CÁC ĐỢT CHẠY (CÁI NÀY NÈ! NÃY BỊ THIẾU LÀM SHIPPER LỖI 404)
-app.get('/api/batches', (req, res) => {
-    res.json(batches);
-});
-
-// 3. TẠO ĐƠN HÀNG MỚI (Hỗ trợ parse chuỗi thô tự do)
+// 1. TẠO ĐƠN HÀNG MỚI (CÓ CHECK TRÙNG LẶP ĐƠN)
 app.post('/api/orders', (req, res) => {
     const { content, note, deliveryTime, phone } = req.body;
-    if (!content) return res.status(400).json({ error: 'Nội dung không được trống' });
+    if (!content) return res.status(400).json({ error: 'Nội dung trống trơn ông ơi!' });
 
-    // Thuật toán tự tách Số điện thoại nếu có trong chuỗi thô để shipper bấm gọi cho tiện
+    // Trích xuất SĐT
     let extractedPhone = phone || '';
     if (!extractedPhone) {
         const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
         const match = content.match(phoneRegex);
         if (match) extractedPhone = match[0];
+    }
+
+    // THUẬT TOÁN CHECK TRÙNG: Trùng nguyên văn HOẶC trùng SĐT của đơn chưa hoàn thành
+    const isDuplicate = orders.some(o => {
+        const matchContent = o.content.trim().toLowerCase() === content.trim().toLowerCase();
+        const matchPhone = extractedPhone && o.phone === extractedPhone && o.status !== 'DONE';
+        return matchContent || matchPhone;
+    });
+
+    if (isDuplicate) {
+        return res.status(400).json({ 
+            success: false, 
+            isDuplicate: true, 
+            error: `🚨 ĐƠN BỊ TRÙNG! Đơn này đã được nhập vào hệ thống trước đó rồi!` 
+        });
     }
 
     const newOrder = {
@@ -45,82 +54,79 @@ app.post('/api/orders', (req, res) => {
         deliveryTime: deliveryTime || 'Giao ngay',
         status: 'PENDING',
         batchId: null,
-        createdAt: new Date().toLocaleString('vi-VN')
+        createdAt: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
     orders.push(newOrder);
     res.status(201).json({ success: true, order: newOrder });
 });
 
-// 4. SỬA THÔNG TIN ĐƠN HÀNG
-app.put('/api/orders/:id', (req, res) => {
-    const orderId = parseInt(req.params.id);
-    const { content, note, deliveryTime, phone } = req.body;
-    
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+// 2. CẬP NHẬT TỌA ĐỘ GPS TỪ ĐIỆN THOẠI SHIPPER
+app.post('/api/shipper/location', (req, res) => {
+    const { shipperName, lat, lng } = req.body;
+    if (!shipperName) return res.status(400).json({ error: 'Thiếu tên shipper' });
 
-    if (order.status !== 'PENDING') {
-        return res.status(400).json({ error: 'Đơn đã xếp chuyến, không thể sửa!' });
-    }
-
-    order.content = content || order.content;
-    order.note = note || order.note;
-    order.phone = phone !== undefined ? phone : order.phone;
-    order.deliveryTime = deliveryTime || order.deliveryTime;
-
-    res.json({ success: true, order });
-});
-
-// 5. XÓA/HỦY ĐƠN HÀNG
-app.delete('/api/orders/:id', (req, res) => {
-    const orderId = parseInt(req.params.id);
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    
-    if (orderIndex === -1) return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
-    if (orders[orderIndex].status !== 'PENDING') {
-        return res.status(400).json({ error: 'Đơn đã đi giao, không thể xóa!' });
-    }
-
-    orders.splice(orderIndex, 1);
+    shipperLocations[shipperName] = {
+        lat,
+        lng,
+        updatedAt: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    };
     res.json({ success: true });
 });
 
-// 6. SHIPPER CẬP NHẬT TRẠNG THÁI ĐƠN LẺ (Bấm Giao Xong từng đơn lẻ trong chuyến)
+// 3. LẤY TỌA ĐỘ TẤT CẢ SHIPPER ĐỂ BẾP XEM
+app.get('/api/shipper/locations', (req, res) => {
+    res.json(shipperLocations);
+});
+
+// SỬA ĐƠN
+app.put('/api/orders/:id', (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const { content } = req.body;
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return res.status(404).json({ error: 'Không thấy đơn' });
+    order.content = content;
+    res.json({ success: true });
+});
+
+// HỦY ĐƠN
+app.delete('/api/orders/:id', (req, res) => {
+    const orderId = parseInt(req.params.id);
+    const index = orders.findIndex(o => o.id === orderId);
+    if (index !== -1) orders.splice(index, 1);
+    res.json({ success: true });
+});
+
+// SHIPPER TICK ĐƠN LẺ GIAO XONG
 app.put('/api/orders/:id/status', (req, res) => {
     const orderId = parseInt(req.params.id);
     const { status } = req.body;
-    
     const order = orders.find(o => o.id === orderId);
-    if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    if (!order) return res.status(404).json({ error: 'Không tìm thấy đơn' });
 
     order.status = status;
     
-    // Tự động kiểm tra: Nếu tất cả đơn con thuộc đợt này đã "DONE", thì tự động hóa "DONE" nguyên đợt chạy luôn
     if (order.batchId && status === 'DONE') {
         const batch = batches.find(b => b.id === order.batchId);
         if (batch) {
             const allOrdersInBatch = orders.filter(o => batch.orderIds.includes(o.id));
             const isAllDone = allOrdersInBatch.every(o => o.status === 'DONE');
-            if (isAllDone) {
-                batch.status = 'DONE';
-            }
+            if (isAllDone) batch.status = 'DONE';
         }
     }
-
-    res.json({ success: true, order });
+    res.json({ success: true });
 });
 
-// 7. QUẦY BẾP GOM ĐỢT GIAO HÀNG
+// GOM ĐỢT GIAO
 app.post('/api/batches', (req, res) => {
     const { orderIds, shipperName } = req.body;
     if (!orderIds || orderIds.length === 0) return res.status(400).json({ error: 'Chưa chọn đơn!' });
 
     const newBatch = {
         id: batchIdCounter++,
-        shipperName: shipperName || 'Chờ shipper nhận',
+        shipperName: shipperName || 'Tài xế vãng lai',
         orderIds: orderIds.map(id => parseInt(id)),
         status: 'READY',
-        createdAt: new Date().toLocaleString('vi-VN')
+        createdAt: new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     };
 
     orderIds.forEach(id => {
@@ -135,16 +141,12 @@ app.post('/api/batches', (req, res) => {
     res.status(201).json({ success: true, batch: newBatch });
 });
 
-// 8. CẬP NHẬT TRẠNG THÁI TOÀN BỘ ĐỢT GIAO
 app.put('/api/batches/:id/status', (req, res) => {
     const batchId = parseInt(req.params.id);
     const { status } = req.body;
-    
     const batch = batches.find(b => b.id === batchId);
-    if (!batch) return res.status(404).json({ error: 'Không tìm thấy đợt' });
-
+    if (!batch) return res.status(404).json({ error: 'Không thấy đợt' });
     batch.status = status;
-
     if (status === 'DONE') {
         batch.orderIds.forEach(id => {
             const order = orders.find(o => o.id === id);
@@ -154,31 +156,26 @@ app.put('/api/batches/:id/status', (req, res) => {
     res.json({ success: true });
 });
 
-// 9. XUẤT FILE EXCEL BÁO CÁO DOANH THU
-app.post('/api/export-excel', async (req, res) => {
+// XUẤT FILE EXCEL
+app.get('/api/export-excel', async (req, res) => {
     try {
-        if (orders.length === 0) return res.status(400).json({ error: 'Không có dữ liệu' });
+        if (orders.length === 0) return res.status(400).send('Không có dữ liệu');
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Khang Mien Tay POS');
-
         worksheet.columns = [
             { header: 'Mã Đơn', key: 'id', width: 10 },
-            { header: 'Chi Tiết Món', key: 'content', width: 35 },
-            { header: 'Địa Chỉ Giao', key: 'note', width: 25 },
+            { header: 'Chi Tiết', key: 'content', width: 35 },
             { header: 'Số Điện Thoại', key: 'phone', width: 15 },
-            { header: 'Hẹn Giờ', key: 'deliveryTime', width: 15 },
             { header: 'Trạng Thái', key: 'status', width: 15 },
-            { header: 'Thuộc Đợt', key: 'batchId', width: 10 }
+            { header: 'Thuộc Đợt Chạy', key: 'batchId', width: 15 }
         ];
-
         orders.forEach(order => worksheet.addRow(order));
-        const filePath = path.join(__dirname, 'Bao_Cao_Don_Hang.xlsx');
-        await workbook.xlsx.writeFile(filePath);
-        res.json({ success: true });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=DoanhThu_' + Date.now() + '.xlsx');
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (e) { res.status(500).send(e.message); }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Hệ thống Khang Miền Tây chạy mượt tại cổng: ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Hệ thống Khang Miền Tây chạy tại cổng: ${PORT}`));
