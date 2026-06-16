@@ -6,50 +6,45 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 20px auto; padding: 20px; background: #f4f6f9; }
         .box-nhap { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        textarea, input { width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+        textarea { width: 100%; margin-bottom: 10px; padding: 12px; box-sizing: border-box; border: 2px solid #ddd; border-radius: 6px; font-size: 15px; resize: vertical; }
+        .btn-gui { width: 100%; padding: 12px; background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 16px; }
         .order-card { background: white; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .badge-time { background: #dc3545; color: white; padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .btn-sua { background: #007bff; color: white; border: none; padding: 5px 10px; cursor: pointer; margin-right: 5px; border-radius: 4px; }
         .btn-xoa { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
         .box-gom { background: #e2e3e5; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .phone-highlight { background: #fff3cd; padding: 2px 5px; border-radius: 4px; font-weight: bold; color: #dc3545; border: 1px dashed #dc3545; }
     </style>
 </head>
 <body>
     <h2>☕ QUẦY ĐIỀU PHỐI & PHA CHẾ - KHANG MIỀN TÂY</h2>
 
     <div class="box-nhap">
-        <h3>✍️ Thêm đơn hàng mới</h3>
-        <textarea id="content" placeholder="Nội dung đơn..." rows="2"></textarea>
-        <input type="text" id="note" placeholder="Địa chỉ giao hàng">
-        <input type="text" id="deliveryTime" placeholder="Hẹn giờ giao (Ví dụ: 15h30, hoặc bỏ trống nếu muốn Giao Ngay)">
-        <button class="btn-gui" onclick="taoDonHang()">Thêm Vào Hàng Đợi</button>
+        <label style="font-weight: bold; font-size: 16px; color: #333;">📝 DÁN NỘI DUNG ĐƠN HÀNG VÀO ĐÂY (Hỗ trợ chuỗi gộp tự do):</label>
+        <textarea id="orderContent" placeholder="Ví dụ dán vào: 1 matcha latte xl, b3, 0945224444&#10;Hoặc dán: 1 matcha cho bạn đợi dưới tòa không có sđt vẫn nhận tuốt!" rows="3" style="margin-top: 10px;"></textarea>
+        <button class="btn-gui" onclick="taoDonHang()">🚀 THÊM VÀO HÀNG ĐỢI PHA CHẾ</button>
     </div>
 
     <div class="box-gom">
         <h3>🏃‍♂️ Gom đợt giao hàng cho Shipper</h3>
-        <input type="text" id="shipperName" placeholder="Tên shipper chạy đợt này (Ví dụ: Anh Khang, Ship Grab...)" style="width: 60%; padding: 8px;">
-        <button style="padding: 8px 15px; background: #ffc107; font-weight: bold; border: none; cursor: pointer;" onclick="gomDonTheoDot()">🚀 BẮN ĐỢT GIAO CHO SHIPPER</button>
+        <input type="text" id="shipperName" placeholder="Tên tài xế phụ trách chạy đợt này..." style="width: 50%; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+        <button style="padding: 10px 20px; background: #ffc107; font-weight: bold; border: none; cursor: pointer; border-radius: 4px; color: #333;" onclick="gomDonTheoDot()">🚀 BẮN ĐỢT GIAO CHO SHIPPER</button>
     </div>
 
-    <h3>⏳ Các đơn hàng đang chờ pha chế / chờ giao:</h3>
+    <h3>⏳ Các đơn hàng đang chờ pha chế:</h3>
     <div id="list-orders"></div>
 
     <script>
         async function taoDonHang() {
-            const content = document.getElementById('content').value;
-            const note = document.getElementById('note').value;
-            const deliveryTime = document.getElementById('deliveryTime').value;
-            if(!content) return alert('Nhập món đã ông ơi!');
+            const content = document.getElementById('orderContent').value;
+            if(!content.trim()) return alert('Chưa dán nội dung đơn hàng ông ơi!');
 
             await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content, note, deliveryTime })
+                body: JSON.stringify({ content })
             });
-            document.getElementById('content').value = '';
-            document.getElementById('note').value = '';
-            document.getElementById('deliveryTime').value = '';
+
+            document.getElementById('orderContent').value = '';
             layDonHang();
         }
 
@@ -60,21 +55,25 @@
             listDiv.innerHTML = '';
 
             const pendings = orders.filter(o => o.status === 'PENDING');
-            if(pendings.length === 0) listDiv.innerHTML = '<p>Không còn đơn nào chờ.</p>';
+            if(pendings.length === 0) listDiv.innerHTML = '<p>Sạch đơn! Không còn đơn nào chờ.</p>';
 
             pendings.forEach(o => {
+                // Làm nổi bật SĐT ở màn hình điều phối để dễ nhìn
+                let textHienThi = o.content;
+                if(o.phone) {
+                    textHienThi = textHienThi.replace(o.phone, `<span class="phone-highlight">${o.phone}</span>`);
+                }
+
                 listDiv.innerHTML += `
                     <div class="order-card">
                         <div style="display: flex; align-items: center; gap: 15px;">
-                            <input type="checkbox" name="orderSelect" value="${o.id}" style="transform: scale(1.4);">
+                            <input type="checkbox" name="orderSelect" value="${o.id}" style="transform: scale(1.5); cursor:pointer;">
                             <div>
-                                <strong>Đơn #${o.id}</strong> - ${o.content} <br>
-                                <small>📍 LƯU Ý: ${o.note || 'Không có'}</small>
+                                <strong>Đơn #${o.id}</strong> ➔ ${textHienThi}
                             </div>
                         </div>
                         <div>
-                            <span class="badge-time">🕒 Hẹn: ${o.deliveryTime}</span>
-                            <button class="btn-sua" onclick="suaDon(${o.id}, '${o.content}', '${o.note}', '${o.deliveryTime}')">✏️ Sửa</button>
+                            <button class="btn-sua" onclick="suaDon(${o.id}, '${o.content}')">✏️ Sửa</button>
                             <button class="btn-xoa" onclick="xoaDon(${o.id})">❌ Hủy</button>
                         </div>
                     </div>
@@ -87,7 +86,7 @@
             const checkboxes = document.querySelectorAll('input[name="orderSelect"]:checked');
             const orderIds = Array.from(checkboxes).map(cb => cb.value);
 
-            if(orderIds.length === 0) return alert('Tích chọn vài đơn để gom đợt đi ông!');
+            if(orderIds.length === 0) return alert('Tích chọn đơn để gom đợt đi ông!');
 
             const res = await fetch('/api/batches', {
                 method: 'POST',
@@ -96,36 +95,33 @@
             });
             const data = await res.json();
             if(data.success) {
-                alert(`Đã gom thành công Đợt giao #${data.batch.id} chuyển cho Shipper!`);
+                alert(`Đã bắn thành công Đợt giao #${data.batch.id} cho Shipper!`);
                 document.getElementById('shipperName').value = '';
                 layDonHang();
             }
         }
 
-        async function suaDon(id, oldContent, oldNote, oldTime) {
-            const content = prompt("Sửa nội dung món:", oldContent);
-            const note = prompt("Sửa ghi chú/địa chỉ:", oldNote);
-            const deliveryTime = prompt("Sửa giờ hẹn giao:", oldTime);
-
-            if (content === null) return; // Bấm cancel không làm gì
+        async function suaDon(id, oldContent) {
+            const content = prompt("Sửa lại thông tin đơn hàng gộp:", oldContent);
+            if (content === null || !content.trim()) return;
 
             await fetch(`/api/orders/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content, note, deliveryTime })
+                body: JSON.stringify({ content })
             });
             layDonHang();
         }
 
         async function xoaDon(id) {
-            if(confirm(`Ông có chắc chắn muốn HỦY đơn hàng #${id} không?`)) {
+            if(confirm(`Xác nhận HỦY hẳn đơn #${id}?`)) {
                 await fetch(`/api/orders/${id}`, { method: 'DELETE' });
                 layDonHang();
             }
         }
 
         layDonHang();
-        setInterval(layDonHang, 5000); // Tự động làm mới mỗi 5 giây
+        setInterval(layDonHang, 5000);
     </script>
 </body>
 </html>
