@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khang Miền Tây - Hệ Thống Vận Hành</title>
+  <style>
+    :root { --primary: #046a38; --dark: #121212; --light: #f4f6f9; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: var(--light); color: #333; padding-bottom: 60px; }
+    .audio-banner { background: #ff9800; color: white; text-align: center; padding: 10px; font-weight: bold; cursor: pointer; }
+    .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+    .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+    button { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; width: 100%; }
+    button:active { transform: scale(0.98); }
+    .btn-logout { background: #d32f2f; margin-top: 10px; }
+    .btn-status { background: #2196f3; padding: 6px 12px; font-size: 14px; width: auto; float: right; }
+    .order-item { border-left: 5px solid #ccc; padding: 15px; margin-bottom: 10px; background: #fafafa; border-radius: 4px; position: relative; overflow: hidden; }
+    .order-item.processing { border-left-color: #ff9800; }
+    .order-item.ready { border-left-color: #2196f3; }
+    .order-item.shipping { border-left-color: #9c27b0; }
+    .order-item.completed { border-left-color: #4caf50; opacity: 0.7; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; background: #999; }
+    .badge.building { background: #009688; }
+    .error-msg { color: #d32f2f; font-size: 14px; margin-top: 5px; display: none; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <div id="audio-unlocker" class="audio-banner" onclick="unlockAudio()">
+    🎵 NÝ RUỘT ƠI! Bấm vào đây 1 lần để kích hoạt hệ thống âm thanh thông báo của quán nha!
+  </div>
+
+  <!-- MÀNH HÌNH ĐĂNG NHẬP -->
+  <div id="login-screen" class="container">
+    <div class="card" style="margin-top: 50px;">
+      <h2 style="text-align: center; color: var(--primary); margin-bottom: 20px;">KHANG MIỀN TÂY LOGIN</h2>
+      <div class="form-group">
+        <label>Tài khoản (bep01, ship01...)</label>
+        <input type="text" id="username" placeholder="Nhập tài khoản">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="password" placeholder="Nhập mật khẩu">
+      </div>
+      <button onclick="handleLogin()">ĐĂNG NHẬP VÀO CA</button>
+    </div>
+  </div>
+
+  <!-- MÀN HÌNH CHÍNH SAU KHI VÀO LÀM -->
+  <div id="main-screen" class="hidden">
+    <div class="header">
+      <h3 id="user-display">Xin chào</h3>
+      <div style="display: flex; gap: 10px;">
+        <button id="btn-excel" style="background:#4caf50; font-size:14px; padding:8px 15px;" onclick="exportExcel()">Xuất Excel</button>
+        <button id="btn-logout-action" class="btn-logout" style="margin:0; font-size:14px; padding:8px 15px;" onclick="handleLogout()">Chốt Ca & Ra Về</button>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- KHU VỰC CỦA BẾP: NHẬP ĐƠN -->
+      <div id="bep-panel" class="card hidden">
+        <h3 style="margin-bottom: 15px; color: var(--primary);">GÕ ĐƠN HÀNG MỚI</h3>
+        <div class="form-group">
+          <label>Nội dung món & Địa chỉ tòa KTX</label>
+          <input type="text" id="order-content" placeholder="Ví dụ: 2 cfs C1 phg 202 hoặc Bạn bên E2">
+        </div>
+        <div class="form-group">
+          <label>Số điện thoại khách (Bỏ trống nếu là khách quen)</label>
+          <input type="text" id="order-phone" placeholder="Nhập sđt khách lạ">
+          <div id="phone-error" class="error-msg">🚨 Phát hiện gõ SĐT! Vui lòng nhập chuẩn và đủ 10 chữ số ný ơi!</div>
+        </div>
+        <button onclick="createOrder()">GỬI ĐƠN XUỐNG BẾP (HÚ ZALO LIỀN!)</button>
+      </div>
+
+      <!-- DANH SÁCH ĐƠN HÀNG CHUNG -->
+      <div class="card">
+        <h3 style="margin-bottom: 15px;">BẢNG THEO DÕI ĐƠN HÀNG THỰC CHIẾN</h3>
+        <div id="order-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // HỆ THỐNG ÂM THANH UI
+    const sounds = {
+      click: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav'),
+      stamp: new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav'),
+      tingting: new Audio('https://assets.mixkit.co/active_storage/sfx/911/911-84.wav'),
+      kaching: new Audio('https://assets.mixkit.co/active_storage/sfx/2017/2017-84.wav'),
+      error: new Audio('https://assets.mixkit.co/active_storage/sfx/959/959-84.wav')
+    };
+
+    let audioUnlocked = false;
+    let currentRole = '';
+    let currentUsername = '';
+    let totalOrdersCount = 0;
+
+    function unlockAudio() {
+      for (let s in sounds) {
+        sounds[s].play();
+        sounds[s].pause();
+        sounds[s].currentTime = 0;
+      }
+      audioUnlocked = true;
+      document.getElementById('audio-unlocker').classList.add('hidden');
+    }
+
+    function playSound(type) {
+      if (audioUnlocked && sounds[type]) {
+        sounds[type].play().catch(e => console.log("Chưa unlock sound"));
+      }
+    }
+
+    // CHECK TRẠNG THÁI CA LÀM VIỆC CŨ
+    window.onload = function() {
+      const savedUser = localStorage.getItem('username');
+      const savedRole = localStorage.getItem('role');
+      if (savedUser && savedRole) {
+        initSession(savedRole, savedUser);
+      }
+    };
+
+    function initSession(role, username) {
+      currentRole = role;
+      currentUsername = username;
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('main-screen').classList.remove('hidden');
+      document.getElementById('user-display').innerText = `Ca trực: ${username.toUpperCase()} (${role === 'bep' ? 'Bếp' : 'Shipper'})`;
+      
+      if (role === 'bep') {
+        document.getElementById('bep-panel').classList.remove('hidden');
+        document.getElementById('btn-logout-action').innerText = "Đăng xuất";
+      } else {
+        document.getElementById('bep-panel').classList.add('hidden');
+        document.getElementById('btn-logout-action').innerText = "Chốt Ca & Xuất Excel";
+      }
+      
+      loadOrders();
+      setInterval(loadOrders, 4000); // Tự động dò đơn mới mỗi 4 giây
+    }
+
+    async function handleLogin() {
+      playSound('click');
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem('username', data.username);
+        localStorage.setItem('role', data.role);
+        initSession(data.role, data.username);
+      } else {
+        playSound('error');
+        alert(data.message);
+      }
+    }
+
+    async function handleLogout() {
+      playSound('click');
+      if (currentRole === 'ship') {
+        alert('🚨 Quy trình bắt buộc: Hệ thống sẽ tự động tải File Excel chốt ca của ông xuống trước khi thoát tài khoản nha!');
+        await exportExcel(); 
+      }
+      
+      await fetch('/api/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUsername })
+      });
+
+      localStorage.clear();
+      location.reload();
+    }
+
+    // BẾP TẠO ĐƠN & CHECK LUẬT SỐ ĐIỆN THOẠI 8-10 SỐ
+    async function createOrder() {
+      const content = document.getElementById('order-content').value.trim();
+      const phone = document.getElementById('order-phone').value.trim();
+      const errorDiv = document.getElementById('phone-error');
+
+      if (!content) return alert('Chưa gõ nội dung món và địa chỉ ný ơi!');
+
+      // LUẬT SỐ ĐIỆN THOẠI THÔNG MINH
+      const continuousDigits = phone.match(/\d{8,}/);
+      if (continuousDigits) {
+        const isExactly10Digits = /^\d{10}$/.test(phone);
+        if (!isExactly10Digits) {
+          playSound('error');
+          errorDiv.style.display = 'block';
+          return;
+        }
+      }
+      errorDiv.style.display = 'none';
+
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content, phone })
+      });
+      
+      if (res.ok) {
+        playSound('stamp');
+        document.getElementById('order-content').value = '';
+        document.getElementById('order-phone').value = '';
+        loadOrders();
+      }
+    }
+
+    // TẢI DANH SÁCH ĐƠN HÀNG VÀ PHÁT TIẾNG TING TING KHI CÓ ĐƠN MỚI
+    async function loadOrders() {
+      const res = await fetch('/api/orders');
+      const orders = await res.json();
+
+      // Kiểm tra nếu hệ thống có thêm đơn mới thì kích còi hú Ting Ting liền
+      if (orders.length > totalOrdersCount && totalOrdersCount !== 0) {
+        playSound('tingting');
+      }
+      totalOrdersCount = orders.length;
+
+      const listDiv = document.getElementById('order-list');
+      listDiv.innerHTML = '';
+
+      orders.forEach(order => {
+        // PHÂN QUYỀN HIỂN THỊ TRÊN GIAO DIỆN SHIPPER
+        if (currentRole === 'ship') {
+          // Ẩn các đơn của shipper khác đã nhận đi giao
+          if (order.status === 'Đang giao' && order.shipper !== currentUsername) return;
+        }
+
+        let statusClass = 'processing';
+        if (order.status === 'Chờ giao') statusClass = 'ready';
+        if (order.status === 'Đang giao') statusClass = 'shipping';
+        if (order.status === 'Đã giao') statusClass = 'completed';
+
+        let actionBtn = '';
+        if (currentRole === 'bep') {
+          if (order.status === 'Đang pha chế') {
+            actionBtn = `<button class="btn-status" onclick="updateStatus('${order._id}', 'Chờ giao')">Xong nước ➔ Gọi ship</button>`;
+          }
+        } else if (currentRole === 'ship') {
+          if (order.status === 'Chờ giao') {
+            actionBtn = `<button class="btn-status" style="background:#9c27b0;" onclick="acceptOrder('${order._id}')">Nhận đơn này</button>`;
+          } else if (order.status === 'Đang giao' && order.shipper === currentUsername) {
+            actionBtn = `<button class="btn-status" style="background:#4caf50;" onclick="updateStatus('${order._id}', 'Đã giao')">Đã giao xong 💰</button>`;
+          }
+        }
+
+        const timeStr = new Date(order.createdAt).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+
+        const div = document.createElement('div');
+        div.className = `order-item ${statusClass}`;
+        div.innerHTML = `
+          <span class="badge ${statusClass}">${order.status}</span>
+          <span class="badge building">📍 Tòa: ${order.building}</span>
+          <span style="font-size:13px; color:#666; float:right;">⏰ ${timeStr}</span>
+          <p style="margin-top:8px; font-weight:bold; font-size:16px;">${order.content}</p>
+          ${order.phone ? `<p style="color: #046a38; font-weight:500; font-size:14px; margin-top:4px;">📞 SĐT: ${order.phone}</p>` : ''}
+          ${order.shipper ? `<p style="font-size:12px; color:#777; margin-top:4px;">🚴 Shipper: ${order.shipper.toUpperCase()}</p>` : ''}
+          <div style="overflow:auto; margin-top:5px;">${actionBtn}</div>
+        `;
+        listDiv.appendChild(div);
+      });
+    }
+
+    async function acceptOrder(id) {
+      playSound('click');
+      await fetch(`/api/orders/${id}/accept`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shipper: currentUsername })
+      });
+      loadOrders();
+    }
+
+    async function updateStatus(id, status) {
+      if (status === 'Đã giao') {
+        playSound('kaching'); // Báo hiệu lượm tiền vui tai cho shipper
+      } else {
+        playSound('click');
+      }
+      await fetch(`/api/orders/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      loadOrders();
+    }
+
+    // THUẬT TOÁN XUẤT FILE EXCEL ĐÚNG CHUẨN ĐỊNH DẠNG NGÀY/THÁNG/NĂM VÀ TỰ ĐẶT TÊN FILE
+    async function exportExcel() {
+      playSound('click');
+      const res = await fetch(`/api/orders/export?role=${currentRole}&username=${currentUsername}`);
+      const orders = await res.json();
+
+      let csvContent = "\uFEFF"; // Cài mã UTF-8 BOM để Excel đọc được tiếng Việt không bị lỗi font
+      csvContent += "Mã đơn,Thời gian tạo,Tòa nhà,Nội dung đơn,Số điện thoại,Trạng thái,Shipper,Thời gian giao xong\n";
+
+      orders.forEach(o => {
+        const createDate = new Date(o.createdAt);
+        const formatCreate = `${createDate.toLocaleDateString('vi-VN')} ${createDate.toLocaleTimeString('vi-VN')}`;
+        const formatDeliver = o.deliveredAt ? `${new Date(o.deliveredAt).toLocaleDateString('vi-VN')} ${new Date(o.deliveredAt).toLocaleTimeString('vi-VN')}` : '';
+
+        // Bọc chuỗi trong dấu ngoặc kép để tránh bị lỗi vỡ cột khi nội dung đơn có dấu phẩy
+        csvContent += `"${o._id}","${formatCreate}","${o.building}","${o.content.replace(/"/g, '""')}","${o.phone}","${o.status}","${o.shipper}","${formatDeliver}"\n`;
+      });
+
+      // Tạo cấu trúc tên file chuẩn theo định dạng: Bao-cao-ngay-thang-nam-thoigian.csv
+      const now = new Date();
+      const dateString = `${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
+      const timeString = `${now.getHours()}h${now.getMinutes()}p`;
+      const filename = `Bao-cao-${dateString}-${timeString}.csv`;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>

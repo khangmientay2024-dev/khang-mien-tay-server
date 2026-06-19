@@ -1,189 +1,202 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const ExcelJS = require('exceljs');
 const mongoose = require('mongoose');
-
+const path = require('path');
 const app = express();
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 🔴 CHUỖI KẾT NỐI MONGODB ĐÃ ĐƯỢC RÁP HOÀN CHỈNH:
-const MONGODB_URI = "mongodb+srv://khangmientay2024_db_user:Khang123456@cluster0.p01gzcb.mongodb.net/KhangMienTay?appName=Cluster0";
+// KẾT NỐI DATABASE MONGOOSE
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://YOUR_MONGO_URL_HERE';
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('=== Đã kết nối MongoDB Khang Miền Tây thành công! ==='))
+  .catch(err => console.error('Lỗi kết nối database:', err));
 
-// KẾT NỐI DATABASE
-mongoose.connect(MONGODB_URI)
-    .then(() => console.log("✅ Đã kết nối két sắt MongoDB thành công!"))
-    .catch(err => console.log("🚨 Lỗi kết nối DB:", err));
-
-// TẠO CẤU TRÚC KÉT SẮT LƯU ĐƠN HÀNG
-const orderSchema = new mongoose.Schema({
-    id: Number,
-    content: String,
-    note: String,
-    phone: String,
-    deliveryTime: String,
-    status: String,
-    shipperName: String,
-    createdAt: String
+// SCHEMA ĐƠN HÀNG
+const OrderSchema = new mongoose.Schema({
+  content: { type: String, required: true },
+  phone: { type: String, default: '' },
+  building: { type: String, default: 'Ngoài KTX' },
+  priorityScore: { type: Number, default: 999 },
+  status: { type: String, enum: ['Đang pha chế', 'Chờ giao', 'Đang giao', 'Đã giao'], default: 'Đang pha chế' },
+  shipper: { type: String, default: '' },
+  createdAt: { type: Date, default: Date.now },
+  deliveredAt: { type: Date }
 });
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model('Order', OrderSchema);
 
-const BARISTA_ACCOUNTS = [{ username: 'bep01', password: '123', name: 'Quầy Pha Chế 1' }];
-const SHIPPER_ACCOUNTS = [
-    { username: 'ship01', password: '123', name: 'Khang Miền Tây' },
-    { username: 'ship02', password: '123', name: 'Anh An' },
-    { username: 'ship03', password: '123', name: 'Anh Tuấn' }
-];
+// SCHEMA QUẢN LÝ TRẠNG THÁI ONLINE CỦA SHIPPER
+const ShipperStatusSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  isOnline: { type: Boolean, default: false },
+  lastActive: { type: Date, default: Date.now }
+});
+const ShipperStatus = mongoose.model('ShipperStatus', ShipperStatusSchema);
 
-let shipperLocations = {}; 
-let chatMessages = []; 
+// THUẬT TOÁN "MẮT THẦN" TỰ ĐỘNG PHÂN TÍCH VÀ XẾP LỘ TRÌNH KTX
+function parseLocationAndPriority(content) {
+  if (!content) return { building: 'Ngoài KTX', score: 999 };
+  let text = content.toLowerCase();
 
-function getVNTime() {
-    return new Date().toLocaleTimeString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit' });
+  // 1. Dọn dẹp văn bản và dịch tiếng lóng
+  text = text.replace(/xê/g, 'c').replace(/bê/g, 'b');
+  text = text.replace(/(c|e|d|b|ba)-(\d)/g, '$1$2');
+
+  // 2. Né bẫy chữ "Em" (Ví dụ: "cho e 1 ly cfs" -> không nhận nhầm thành tòa E1)
+  const trapPattern = /\be\s+(\d+)\s*(ly|cfs|phần|bịch|cốc|chai|bạc xỉu|đen|sữa|trà|đá)/g;
+  text = text.replace(trapPattern, '');
+
+  // 3. Định vị tòa nhà và gán điểm ưu tiên lộ trình (C -> E -> D -> B -> BA -> Ngoài)
+  // Quét tòa BA trước vì chữ "ba" dễ bị nhầm nếu quét chữ "b" trước
+  const baMatch = text.match(/\bba[1-5]\b/);
+  if (baMatch) {
+    const num = parseInt(baMatch[0].replace('ba', ''));
+    return { building: baMatch[0].toUpperCase(), score: 21 + (5 - num) }; // BA5 -> BA1 (Đảo ngược)
+  }
+  const cMatch = text.match(/\bc[1-6]\b/);
+  if (cMatch) {
+    const num = parseInt(cMatch[0].replace('c', ''));
+    return { building: cMatch[0].toUpperCase(), score: num }; // C1 -> C6
+  }
+  const eMatch = text.match(/\be[1-4]\b/);
+  if (eMatch) {
+    const num = parseInt(eMatch[0].replace('e', ''));
+    return { building: eMatch[0].toUpperCase(), score: 6 + num }; // E1 -> E4
+  }
+  const dMatch = text.match(/\bd[2-6]\b/);
+  if (dMatch) {
+    const num = parseInt(dMatch[0].replace('d', ''));
+    return { building: dMatch[0].toUpperCase(), score: 11 + (6 - num) }; // D6 -> D2 (Đảo ngược)
+  }
+  const bMatch = text.match(/\bb[1-5]\b/);
+  if (bMatch) {
+    const num = parseInt(bMatch[0].replace('b', ''));
+    return { building: bMatch[0].toUpperCase(), score: 16 + (5 - num) }; // B5 -> B1 (Đảo ngược)
+  }
+
+  return { building: 'Ngoài KTX', score: 999 };
 }
 
-function getActiveShippers() {
-    const now = Date.now();
-    const activeList = [];
-    for (let name in shipperLocations) {
-        if (now - shipperLocations[name].timestamp < 120000) activeList.push(name);
+// ROUTE ĐĂNG NHẬP KHÔNG CẦN CƠ SỞ DỮ LIỆU PHỨC TẠP
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  const isBep = username.startsWith('bep') && password === 'khangmt2026';
+  const isShip = username.startsWith('ship') && password === 'khangmt2026';
+
+  if (isBep || isShip) {
+    if (isShip) {
+      await ShipperStatus.findOneAndUpdate(
+        { username },
+        { username, isOnline: true, lastActive: new Date() },
+        { upsert: true }
+      );
     }
-    return activeList;
-}
-
-// LOGIN
-app.post('/api/login', (req, res) => {
-    const { username, password, role } = req.body;
-    let user = role === 'bep' ? BARISTA_ACCOUNTS.find(u => u.username === username && u.password === password) 
-                              : SHIPPER_ACCOUNTS.find(u => u.username === username && u.password === password);
-    if (user) res.json({ success: true, name: user.name });
-    else res.status(401).json({ success: false, error: 'Sai tài khoản hoặc mật khẩu!' });
+    return res.json({ success: true, role: isBep ? 'bep' : 'ship', username });
+  }
+  return res.status(401).json({ success: false, message: 'Sai tài khoản hoặc mật khẩu ný ơi!' });
 });
 
-// LẤY ĐƠN HÀNG TỪ DATABASE
-app.get('/api/orders', async (req, res) => {
-    try {
-        const orders = await Order.find().sort({ id: 1 });
-        res.json(orders);
-    } catch(e) { res.status(500).json({error: 'Lỗi máy chủ'}); }
+// ROUTE ĐĂNG XUẤT / CHỐT CA CHO SHIPPER
+app.post('/api/logout', async (req, res) => {
+  const { username } = req.body;
+  if (username) {
+    await ShipperStatus.findOneAndUpdate({ username }, { isOnline: false });
+  }
+  res.json({ success: true });
 });
 
-// TẠO ĐƠN MỚI LƯU VÀO DATABASE
+// BẾP TẠO ĐƠN HÀNG MỚI (TÍCH HỢP ĐIỀU PHỐI TỰ ĐỘNG 1-1)
 app.post('/api/orders', async (req, res) => {
-    try {
-        const { content, note, deliveryTime, phone } = req.body;
-        if (!content) return res.status(400).json({ error: 'Nội dung trống!' });
+  try {
+    const { content, phone } = req.body;
+    const { building, score } = parseLocationAndPriority(content);
 
-        let extractedPhone = phone || '';
-        if (!extractedPhone) {
-            const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
-            const match = content.match(phoneRegex);
-            if (match) extractedPhone = match[0];
-        }
+    // Kiểm tra xem hiện tại có chính xác 1 shipper đang online không
+    const onlineShippers = await ShipperStatus.find({ isOnline: true });
+    
+    let status = 'Đang pha chế';
+    let assignedShipper = '';
 
-        if (!extractedPhone || !/^0\d{9}$/.test(extractedPhone)) {
-            return res.status(400).json({ success: false, error: '🚨 LỖI: Số điện thoại không hợp lệ!' });
-        }
+    if (onlineShippers.length === 1) {
+      status = 'Đang giao'; // Đẩy thẳng đi giao, bỏ qua bước chờ
+      assignedShipper = onlineShippers[0].username;
+    }
 
-        const isDuplicate = await Order.findOne({ content: content.trim(), phone: extractedPhone, status: { $ne: 'DONE' } });
-        if (isDuplicate) return res.status(400).json({ success: false, error: `🚨 TRÙNG ĐƠN!` });
+    const newOrder = new Order({
+      content,
+      phone,
+      building,
+      priorityScore: score,
+      status,
+      shipper: assignedShipper
+    });
 
-        const isSameCustomer = await Order.findOne({ phone: extractedPhone, status: { $ne: 'DONE' } });
-
-        const newId = parseInt(Date.now().toString().slice(-6)); // Tạo mã ID 6 số
-        const newOrder = new Order({
-            id: newId,
-            content,
-            note: note || '',
-            phone: extractedPhone, 
-            deliveryTime: deliveryTime || 'Giao ngay',
-            status: 'PENDING',
-            shipperName: null,
-            createdAt: getVNTime()
-        });
-
-        await newOrder.save();
-        res.status(201).json({ success: true, order: newOrder, isSameCustomer: !!isSameCustomer });
-    } catch(e) { res.status(500).json({ error: 'Lỗi server' }); }
+    await newOrder.save();
+    res.json({ success: true, order: newOrder });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
-// CÁC HÀM CẬP NHẬT TRẠNG THÁI VÀO DATABASE
-app.put('/api/orders/:id/prepare', async (req, res) => {
-    await Order.findOneAndUpdate({ id: parseInt(req.params.id), status: 'PENDING' }, { status: 'PREPARED' });
-    res.json({ success: true });
+// LẤY DANH SÁCH ĐƠN HÀNG (SẮP XẾP THEO LỘ TRÌNH THÔNG MINH)
+app.get('/api/orders', async (req, res) => {
+  try {
+    // Sắp xếp theo lộ trình ưu tiên KTX tăng dần, đơn mới nhất lên trước
+    const orders = await Order.find().sort({ priorityScore: 1, createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
-app.post('/api/orders/send-batch', async (req, res) => {
-    const activeShippers = getActiveShippers();
-    let targetStatus = activeShippers.length === 1 ? 'SHIPPING' : 'READY';
-    let targetShipper = activeShippers.length === 1 ? activeShippers[0] : null;
-
-    const result = await Order.updateMany(
-        { status: 'PREPARED' }, 
-        { status: targetStatus, shipperName: targetShipper }
+// SHIPPER NHẬN ĐƠN THỦ CÔNG (NẾU QUÁN CÓ TỪ 2 SHIPPER TRỞ LÊN ONLINE)
+app.put('/api/orders/:id/accept', async (req, res) => {
+  try {
+    const { shipper } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.findById ? req.id : req.params.id,
+      { status: 'Đang giao', shipper },
+      { new: true }
     );
-    res.json({ success: true, count: result.modifiedCount, autoAssigned: activeShippers.length === 1 });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
-app.put('/api/orders/:id/assign', async (req, res) => {
-    const order = await Order.findOneAndUpdate(
-        { id: parseInt(req.params.id), status: 'READY' }, 
-        { status: 'SHIPPING', shipperName: req.body.shipperName || 'Shipper Ẩn Danh' },
-        { new: true }
-    );
-    if(order) res.json({ success: true, order });
-    else res.status(400).json({ error: 'Đơn này không thể nhận!' });
-});
-
+// CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG (HOÀN THÀNH HOẶC CHUYỂN TRẠNG THÁI)
 app.put('/api/orders/:id/status', async (req, res) => {
-    await Order.findOneAndUpdate({ id: parseInt(req.params.id) }, { status: req.body.status });
-    res.json({ success: true });
+  try {
+    const { status } = req.body;
+    const updateData = { status };
+    if (status === 'Đã giao') {
+      updateData.deliveredAt = new Date();
+    }
+    const order = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    res.json({ success: true, order });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
-app.delete('/api/orders/:id', async (req, res) => {
-    await Order.deleteOne({ id: parseInt(req.params.id) });
-    res.json({ success: true });
+// ROUTE LẤY DỮ LIỆU ĐỂ XUẤT FILE EXCEL THEO ĐÚNG PHÂN QUYỀN BẢO MẬT
+app.get('/api/orders/export', async (req, res) => {
+  try {
+    const { role, username } = req.query;
+    let query = {};
+    
+    if (role === 'ship') {
+      // Bảo mật doanh thu: Shipper chỉ được thấy và xuất đơn Đã Giao của chính mình
+      query = { shipper: username, status: 'Đã giao' };
+    }
+
+    const data = await Order.find(query).sort({ createdAt: -1 });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 });
 
-// VỊ TRÍ SHIPPER & CHAT (Lưu tạm trên RAM cho nhẹ)
-app.post('/api/shipper/location', (req, res) => {
-    const { shipperName, lat, lng } = req.body;
-    if (shipperName) shipperLocations[shipperName] = { lat, lng, updatedAt: getVNTime(), timestamp: Date.now() };
-    res.json({ success: true });
-});
-app.get('/api/shipper/locations', (req, res) => res.json(shipperLocations));
-
-app.get('/api/chat', (req, res) => res.json(chatMessages));
-app.post('/api/chat', (req, res) => {
-    const { sender, text } = req.body;
-    chatMessages.push({ sender, text, time: getVNTime() });
-    if(chatMessages.length > 50) chatMessages.shift();
-    res.json({ success: true });
-});
-
-// XUẤT EXCEL TỪ DATABASE
-app.get('/api/export-excel', async (req, res) => {
-    try {
-        const orders = await Order.find();
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Bao Cao');
-        worksheet.columns = [
-            { header: 'Mã Đơn', key: 'id', width: 10 },
-            { header: 'Nội Dung', key: 'content', width: 40 },
-            { header: 'Số Điện Thoại', key: 'phone', width: 15 },
-            { header: 'Shipper Giao', key: 'shipperName', width: 15 },
-            { header: 'Trạng Thái', key: 'status', width: 15 },
-            { header: 'Thời Gian', key: 'createdAt', width: 15 }
-        ];
-        orders.forEach(o => worksheet.addRow(o));
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', `attachment; filename=Bao_Cao_${new Date().getTime()}.xlsx`);
-        await workbook.xlsx.write(res);
-        res.end();
-    } catch (e) { res.status(500).send(e.message); }
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Hệ thống Khang Miền Tây chạy tại cổng: ${PORT}`));
+// KHỞI CHẠY SERVER
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`=== Hệ thống Khang Miền Tây đang chạy trên cổng ${PORT} ===`));
